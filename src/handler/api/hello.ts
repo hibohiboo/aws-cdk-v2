@@ -1,7 +1,6 @@
-import { formatDate } from '/opt/nodejs/utils/date-util';
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { format } from 'date-fns';
-
+import { formatDate } from '/opt/nodejs/index';
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   const datetime = formatDate(new Date(event.requestContext.requestTimeEpoch))

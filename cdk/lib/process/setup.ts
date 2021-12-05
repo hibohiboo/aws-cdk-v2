@@ -15,7 +15,7 @@ const srcFilePath = (file: string) => path.resolve(`${process.cwd()}/../${file}`
 
 export const bundleNpm = () => {
   createNodeModules();
-  copyNodeModules();
+  // copyCommonModules();
 };
 
 
@@ -41,7 +41,7 @@ const getModulesInstallDirName = (): string => {
   return runtimeDirName;
 };
 
-const copyNodeModules = () => {
+const copyCommonModules = () => {
   const dist = path.resolve(process.cwd(), `${commonModulesPath}/${NODE_LAMBDA_LAYER_RUNTIME_DIR_NAME}`)
   const src = path.resolve(`${process.cwd()}/../src/common`)
   fs.mkdirsSync(`${commonModulesPath}`);

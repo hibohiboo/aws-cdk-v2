@@ -27,8 +27,10 @@ export class CdkStack extends Stack {
       bundling: {
         externalModules: [
           'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-          'date-fns', // Layrerに入れておきたいモジュール
+          'date-fns' // Layrerに入れておきたいモジュール
+          , '/opt/*'
         ],
+
       }
     });
     const api = new RestApi(this, 'ServerlessRestApi', { cloudWatchRole: false });
