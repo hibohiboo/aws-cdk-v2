@@ -9,8 +9,10 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "predev": "ts-node lib/process/setup.ts",
+    "createLayer": "ts-node lib/process/setup.ts",
+    "predev": "npm run createLayer",
     "dev": "sam-beta-cdk local start-api",
+    "predeploy": "npm run createLayer",
     "deploy": "cdk deploy -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
   },
   "devDependencies": {

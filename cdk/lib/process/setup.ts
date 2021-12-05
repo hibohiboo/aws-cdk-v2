@@ -17,20 +17,14 @@ const bundleNpm = () => {
   // install package.json (production)
   childProcess.execSync(`npm install --production`, {
     cwd: getModulesInstallDirName(),
-    // bundle時にパイプで出力するtemplate.yamlに、余分な文字列が含まれてしまわないように出力はオフ
-    stdio: ['ignore', 'ignore', 'ignore'],
     env: { ...process.env },
-    shell: 'bash'
   });
 };
 
 const copyPackageJson = () => {
-
-  // copy package.json and package.lock.json
   fs.mkdirsSync(getModulesInstallDirName());
   ['package.json']
     .map(file => fs.copyFileSync(srcFilePath(file), distFilePath(file)));
-
 };
 
 const getModulesInstallDirName = (): string => {
