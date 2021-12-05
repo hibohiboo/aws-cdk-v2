@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/hibohiboo/aws-cdk-v2#readme",
   "dependencies": {
-    "aws-sdk": "^2.1043.0"
+    "aws-sdk": "^2.1043.0",
+    "date-fns": "^2.27.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.85"
