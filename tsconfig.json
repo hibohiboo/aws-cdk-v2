@@ -19,6 +19,9 @@
     "strictPropertyInitialization": false,
     "typeRoots": ["./node_modules/@types"],
     "baseUrl": ".",
-    "paths": { "@/*" : ["./src/*"] }
+    "paths": {
+      "/opt/nodejs/*": ["src/common/*"],
+      "@/*" : ["./src/*"]
+    }
   }
 }

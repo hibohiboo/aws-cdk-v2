@@ -11,4 +11,5 @@ cdk.out
 .aws-sam
 
 # lambda layer
-bundle
+bundle-node_modules
+bundle-common
