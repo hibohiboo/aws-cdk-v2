@@ -27,8 +27,8 @@ export class CdkStack extends Stack {
       bundling: {
         externalModules: [
           'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-          'date-fns' // Layrerに入れておきたいモジュール
-          , '/opt/*'
+          'date-fns', // Layrerに入れておきたいモジュール
+          '/opt/nodejs/*'
         ],
 
       }

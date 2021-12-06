@@ -21,7 +21,6 @@
     "baseUrl": ".",
     "paths": {
       "/opt/nodejs/*": ["src/common/*"],
-      "layer": ["src/common"],
       "@/*" : ["./src/*"]
     }
   }
