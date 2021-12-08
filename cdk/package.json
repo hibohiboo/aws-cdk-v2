@@ -9,7 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "createLayer": "ts-node lib/process/pre.ts && cd .. && npm run bundle",
+    "createLayer": "ts-node lib/process/pre.ts",
     "predev": "npm run createLayer",
     "dev": "sam-beta-cdk local start-api",
     "predeploy": "npm run createLayer",

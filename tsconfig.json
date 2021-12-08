@@ -20,7 +20,6 @@
     "typeRoots": ["./node_modules/@types"],
     "baseUrl": ".",
     "paths": {
-      "/opt/nodejs/*": ["src/common/*"],
       "@/*" : ["./src/*"]
     }
   }
