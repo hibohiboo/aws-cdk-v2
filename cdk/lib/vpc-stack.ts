@@ -1,6 +1,7 @@
 import { Aspects, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { CfnRoute, CfnRouteTable, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
 
 export class VpcStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
@@ -27,6 +28,7 @@ export class VpcStack extends Stack {
       return subnet
     });
 
+    //------------------ Aurora用の設定 ----------------------------------
     const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnts', {
       vpc,
       description: 'seburity group for Aurora'
@@ -34,6 +36,12 @@ export class VpcStack extends Stack {
     Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnts');
     securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
 
+    const sebnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
+      vpc,
+      vpcSubnets: { subnets },
+      description: 'subnet group for Aurora db'
+    });
+    Tags.of(sebnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
 
