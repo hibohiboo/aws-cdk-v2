@@ -13,3 +13,6 @@ cdk.out
 # lambda layer
 bundle-node_modules
 bundle-common
+
+# 本来は管理に含めるべきだがサンプル用なので除外
+cdk.context.json

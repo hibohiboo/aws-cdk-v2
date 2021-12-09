@@ -29,7 +29,7 @@ export class VpcStack extends Stack {
 
     const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnts', {
       vpc,
-      description: 'プライベートサブネットのセキュリティグループ'
+      description: 'seburity group for Aurora'
     })
     Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnts');
     securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
