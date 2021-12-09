@@ -2,6 +2,7 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { CdkStack } from '../lib/cdk-stack';
+import { VpcStack } from '../lib/vpc-stack';
 
 const app = new cdk.App();
 new CdkStack(app, 'CdkV2SampleStack', {

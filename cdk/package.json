@@ -13,22 +13,24 @@
     "predev": "npm run createLayer",
     "dev": "sam-beta-cdk local start-api",
     "predeploy": "npm run createLayer",
-    "deploy": "cdk deploy -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
+    "deploy": "cdk deploy -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
+    "vpc-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc.ts\" deploy VpcStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.0.3",
-    "@types/node": "16.11.11",
-    "aws-cdk": "2.0.0",
+    "@types/node": "16.11.12",
+    "aws-cdk": "2.1.0",
     "fs-extra": "^10.0.0",
     "jest": "^27.4.3",
-    "ts-jest": "^27.1.0",
+    "ts-jest": "^27.1.1",
     "ts-node": "^10.4.0",
     "typescript": "~4.5.2"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.0.0",
+    "aws-cdk-lib": "2.1.0",
     "constructs": "^10.0.0",
+    "eslint": "^7.32.0",
     "source-map-support": "^0.5.21"
   }
 }
