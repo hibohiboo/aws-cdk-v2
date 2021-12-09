@@ -1,7 +1,7 @@
 import { Aspects, RemovalPolicy, SecretValue, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnRoute, CfnRouteTable, InstanceClass, InstanceSize, InstanceType, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ParameterGroup, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { InstanceClass, InstanceSize, InstanceType, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ParameterGroup, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 
@@ -26,15 +26,28 @@ export class AuroraStack extends Stack {
 
     const vpc = Vpc.fromLookup(this, 'Vpc', { vpcId: props.vpcId })
     const securityGroup = SecurityGroup.fromLookupById(this, 'SecurityGroup', props.sgId);
-    const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'Subnet', props.subnetGroupName);
+    // subnetGroupNameはlowecaseで作成される
+    const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
 
-    // postgres13を指定
-    const AURORA_POSTGRES_ENGINE_VERSION = AuroraPostgresEngineVersion.VER_13_4;
-    const RDS_MAJOR_VERSION = AURORA_POSTGRES_ENGINE_VERSION.auroraPostgresMajorVersion.split('.')[0]
-    const parameterGroup = ParameterGroup.fromParameterGroupName(this, 'DBParameterGroup', `default.aurora-postgresql${RDS_MAJOR_VERSION}`)
+    const secret = new Secret(this, 'DBCredentioalSecret', {
+      secretName: props.dbSecretName,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ username: props.dbAdminName }),
+        excludePunctuation: true, // '、/、"、@、スペースはpostgresのパスワードに利用できないので除外
+        includeSpace: false,
+        generateStringKey: 'password'
+      }
+    })
+    Tags.of(secret).add('Name', props.dbSecretName);
+
+
+    // default..aurora-postgresql11が見つからない。。
+    // const AURORA_POSTGRES_ENGINE_VERSION = AuroraPostgresEngineVersion.VER_11_9; // LTSのバージョンを選択 2021.12.10
+    // const RDS_MAJOR_VERSION = AURORA_POSTGRES_ENGINE_VERSION.auroraPostgresMajorVersion.split('.')[0]
+    // const parameterGroup = ParameterGroup.fromParameterGroupName(this, 'DBParameterGroup', `default.aurora-postgresql${RDS_MAJOR_VERSION}`)
 
     const cluster = new DatabaseCluster(this, 'clusterForAurora', {
-      engine: DatabaseClusterEngine.AURORA_POSTGRESQL,
+      engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_13_4 }),
       removalPolicy: RemovalPolicy.DESTROY, // 本番運用だと消しちゃだめだと思う
       defaultDatabaseName: 'postgres',
       instanceProps: {
@@ -45,13 +58,10 @@ export class AuroraStack extends Stack {
       },
       instances: 1,
       subnetGroup,
-      parameterGroup,
-      credentials: {
-        secretName: props.dbSecretName,
-        username: props.dbAdminName,
-        password: new SecretValue(props.dbUserPassword)
-      },
+      // parameterGroup,
+      credentials: Credentials.fromSecret(secret)
     });
+
     const proxy = new DatabaseProxy(this, 'Proxy', {
       proxyTarget: ProxyTarget.fromCluster(cluster),
       secrets: [cluster.secret!],
@@ -64,9 +74,6 @@ export class AuroraStack extends Stack {
     Tags.of(role).add('Name', 'AuroraProxyRole');
     proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
 
-    const secret = Secret.fromSecretNameV2(this, 'Secret', props.dbSecretName)
-    Tags.of(secret).add('Name', props.dbSecretName);
-    Tags.of(secret).add('Stack', id)
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
 

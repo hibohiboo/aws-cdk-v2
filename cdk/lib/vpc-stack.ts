@@ -3,9 +3,12 @@ import { Construct } from 'constructs';
 import { CfnRoute, CfnRouteTable, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
 
+interface VpcStackProps extends StackProps {
+  subnetGroupName: string
+}
 export class VpcStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: VpcStackProps) {
+    super(scope, id, { ...props, subnetGroupName: undefined } as StackProps);
     const cidr = '10.0.0.0/16';
     const vpc = new Vpc(this, 'VPC', {
       cidr,
@@ -39,7 +42,8 @@ export class VpcStack extends Stack {
     const sebnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
       vpc,
       vpcSubnets: { subnets },
-      description: 'subnet group for Aurora db'
+      description: 'subnet group for Aurora db',
+      subnetGroupName: props.subnetGroupName
     });
     Tags.of(sebnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
     // 作成したリソース全てにタグをつける
