@@ -14,7 +14,8 @@
     "dev": "sam-beta-cdk local start-api",
     "predeploy": "npm run createLayer",
     "deploy": "cdk deploy -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
-    "vpc-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc.ts\" deploy VpcStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
+    "vpc-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc.ts\" deploy VpcStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
+    "aurora-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/aurora.ts\" deploy VpcStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
@@ -30,6 +31,7 @@
   "dependencies": {
     "aws-cdk-lib": "2.1.0",
     "constructs": "^10.0.0",
+    "dotenv": "^10.0.0",
     "eslint": "^7.32.0",
     "source-map-support": "^0.5.21"
   }

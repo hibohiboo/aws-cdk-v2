@@ -24,7 +24,7 @@ export class VpcStack extends Stack {
 
     const subnets = privateSubnetProps.map((prop, i) => {
       const subnet = new PrivateSubnet(this, `MyPrivateSubnet${i}`, prop);
-      Tags.of(vpc).add('Name', `private-subnet-${i}`);
+      Tags.of(subnet).add('Name', `private-subnet-${i}`);
       return subnet
     });
 
