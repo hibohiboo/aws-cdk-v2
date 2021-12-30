@@ -1,6 +1,6 @@
 import { Aspects, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnRoute, CfnRouteTable, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { CfnInternetGateway, CfnRoute, CfnRouteTable, CfnVPCGatewayAttachment, Peer, Port, PrivateSubnet, PrivateSubnetProps, PublicSubnet, PublicSubnetProps, RouterType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
 
 interface VpcStackProps extends StackProps {
@@ -18,6 +18,7 @@ export class VpcStack extends Stack {
     // Tags.of(vpc).add('Stack', id);
     Tags.of(vpc).add('Name', 'vpc');
 
+    // プライベートSubnet（RDS用）
     const privateSubnetProps: PrivateSubnetProps[] = [
       { availabilityZone: 'ap-northeast-1a', vpcId: vpc.vpcId, cidrBlock: '10.0.2.0/24' },
       { availabilityZone: 'ap-northeast-1c', vpcId: vpc.vpcId, cidrBlock: '10.0.3.0/24' },
@@ -31,12 +32,33 @@ export class VpcStack extends Stack {
       return subnet
     });
 
+    // パブリックSubnet
+    const internetGateway = new CfnInternetGateway(this, "InternetGateway");
+    Tags.of(internetGateway).add('Name', `internetGateway`);
+    const gatewayAttachment = new CfnVPCGatewayAttachment(this, "gateway", {
+      vpcId: vpc.vpcId,
+      internetGatewayId: internetGateway.ref
+    })
+    Tags.of(gatewayAttachment).add('Name', `GatewayAttachment`);
+
+    const publicSubnet = new PublicSubnet(this, `MyPublicSubnet`, {
+      vpcId: vpc.vpcId,
+      availabilityZone: 'ap-northeast-1a',
+      cidrBlock: '10.0.1.0/24',
+    });
+    Tags.of(publicSubnet).add('Name', `public-subnet`);
+
+    publicSubnet.addRoute("PubSubnetRoute", {
+      routerType: RouterType.GATEWAY,
+      routerId: internetGateway.ref
+    })
+
     //------------------ Aurora用の設定 ----------------------------------
-    const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnts', {
+    const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnets', {
       vpc,
       description: 'seburity group for Aurora and vpc lambda'
     })
-    Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnts');
+    Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnets');
     securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
 
     const sebnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
@@ -46,6 +68,15 @@ export class VpcStack extends Stack {
       subnetGroupName: props.subnetGroupName
     });
     Tags.of(sebnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
+
+    //------------------ 踏み台用の設定 ----------------------------------
+    const securityGroupPublic = new SecurityGroup(this, 'SecurityGroupForPublicSubnets', {
+      vpc,
+      description: 'seburity group for bastion'
+    })
+    Tags.of(securityGroupPublic).add('Name', 'SecurityGroupForPublicSubnets');
+
+    //------------------ 共通設定 ----------------------------------
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
 
