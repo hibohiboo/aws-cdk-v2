@@ -3,7 +3,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
-import { COMMON_LAMBDA_LAYER_DIR, NODE_LAMBDA_LAYER_DIR } from './process/setup';
+import { NODE_LAMBDA_LAYER_DIR } from './process/setup';
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
