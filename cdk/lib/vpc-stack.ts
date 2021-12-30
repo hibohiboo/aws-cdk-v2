@@ -1,6 +1,6 @@
 import { Aspects, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnInternetGateway, CfnRoute, CfnRouteTable, CfnVPCGatewayAttachment, Peer, Port, PrivateSubnet, PrivateSubnetProps, PublicSubnet, PublicSubnetProps, RouterType, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
 
 interface VpcStackProps extends StackProps {

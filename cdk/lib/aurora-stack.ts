@@ -1,8 +1,7 @@
-import { Aspects, RemovalPolicy, SecretValue, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
+import { Aspects, RemovalPolicy, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { InstanceClass, InstanceSize, InstanceType, Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ParameterGroup, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 
 interface AuroraStackProps extends StackProps {
