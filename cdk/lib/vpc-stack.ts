@@ -34,7 +34,7 @@ export class VpcStack extends Stack {
     //------------------ Aurora用の設定 ----------------------------------
     const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnts', {
       vpc,
-      description: 'seburity group for Aurora'
+      description: 'seburity group for Aurora and vpc lambda'
     })
     Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnts');
     securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
