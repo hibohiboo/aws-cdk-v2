@@ -78,13 +78,13 @@ export class VpcStack extends Stack {
     Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnets');
     securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
 
-    const sebnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
+    const subnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
       vpc,
       vpcSubnets: { subnets },
       description: 'subnet group for Aurora db',
       subnetGroupName: props.subnetGroupName
     });
-    Tags.of(sebnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
+    Tags.of(subnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
 
     //------------------ 踏み台用の設定 ----------------------------------
     const securityGroupPublic = new SecurityGroup(this, 'SecurityGroupForPublicSubnets', {
