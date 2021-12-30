@@ -62,19 +62,19 @@ export class AuroraStack extends Stack {
       credentials: Credentials.fromSecret(secret)
     });
 
-    const proxy = new DatabaseProxy(this, 'Proxy', {
-      proxyTarget: ProxyTarget.fromCluster(cluster),
-      secrets: [secret],
-      vpc,
-      securityGroups: [securityGroup],
-      requireTLS: true,
-      iamAuth: true
-    });
-    Tags.of(proxy).add('Name', 'AuroraProxy');
+    // const proxy = new DatabaseProxy(this, 'Proxy', {
+    //   proxyTarget: ProxyTarget.fromCluster(cluster),
+    //   secrets: [secret],
+    //   vpc,
+    //   securityGroups: [securityGroup],
+    //   requireTLS: true,
+    //   iamAuth: true
+    // });
+    // Tags.of(proxy).add('Name', 'AuroraProxy');
 
-    const role = new iam.Role(this, 'DBProxyRole', { assumedBy: new iam.AccountPrincipal(this.account) });
-    Tags.of(role).add('Name', 'AuroraProxyRole');
-    proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
+    // const role = new iam.Role(this, 'DBProxyRole', { assumedBy: new iam.AccountPrincipal(this.account) });
+    // Tags.of(role).add('Name', 'AuroraProxyRole');
+    // proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
 
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
