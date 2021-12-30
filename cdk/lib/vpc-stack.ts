@@ -76,7 +76,7 @@ export class VpcStack extends Stack {
       description: 'seburity group for Aurora and vpc lambda'
     })
     Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnets');
-    securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
+    // securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
 
     const subnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
       vpc,
@@ -92,7 +92,7 @@ export class VpcStack extends Stack {
       description: 'seburity group for bastion'
     })
     Tags.of(securityGroupPublic).add('Name', 'SecurityGroupForPublicSubnets');
-
+    securityGroupPrivate.addIngressRule(securityGroupPublic, Port.tcp(5432));
     //------------------ 共通設定 ----------------------------------
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
