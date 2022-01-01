@@ -1,8 +1,9 @@
 import { Aspects, RemovalPolicy, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
+import { AccountPrincipal, Role } from 'aws-cdk-lib/aws-iam';
 
 interface AuroraStackProps extends StackProps {
   vpcId: string
@@ -61,19 +62,19 @@ export class AuroraStack extends Stack {
       credentials: Credentials.fromSecret(secret)
     });
 
-    // const proxy = new DatabaseProxy(this, 'Proxy', {
-    //   proxyTarget: ProxyTarget.fromCluster(cluster),
-    //   secrets: [secret],
-    //   vpc,
-    //   securityGroups: [securityGroup],
-    //   requireTLS: true,
-    //   iamAuth: true
-    // });
-    // Tags.of(proxy).add('Name', 'AuroraProxy');
+    const proxy = new DatabaseProxy(this, 'Proxy', {
+      proxyTarget: ProxyTarget.fromCluster(cluster),
+      secrets: [secret],
+      vpc,
+      securityGroups: [securityGroup],
+      requireTLS: true,
+      iamAuth: true
+    });
+    Tags.of(proxy).add('Name', 'AuroraProxy');
 
-    // const role = new iam.Role(this, 'DBProxyRole', { assumedBy: new iam.AccountPrincipal(this.account) });
-    // Tags.of(role).add('Name', 'AuroraProxyRole');
-    // proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
+    const role = new Role(this, 'DBProxyRole', { assumedBy: new AccountPrincipal(this.account) });
+    Tags.of(role).add('Name', 'AuroraProxyRole');
+    proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
 
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
