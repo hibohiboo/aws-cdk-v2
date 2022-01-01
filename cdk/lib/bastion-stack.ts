@@ -1,4 +1,4 @@
-import { , Stack, StackProps, Tags } from 'aws-cdk-lib';
+import { Stack, StackProps, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { BastionHostLinux, InstanceType, PublicSubnet, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
@@ -52,7 +52,9 @@ export class BastionStack extends Stack {
       "echo 'password=$(echo $secret | jq -r .password)' >> /usr/bin/dbaccess.sh",
       "echo 'endpoint=$(echo $secret | jq -r .host)' >> /usr/bin/dbaccess.sh",
       "echo 'PGPASSWORD=$password psql -h $endpoint -U $user -d postgres' >> /usr/bin/dbaccess.sh",
-      "chmod 755 /usr/bin/dbaccess.sh"
+      "chmod 755 /usr/bin/dbaccess.sh",
+      // ソケットリレーでポートフォワーディング用のポートを開ける用
+      'yum install -y socat',
     );
 
     // 認証情報へのアクセス許可

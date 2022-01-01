@@ -1,0 +1,17 @@
+---
+schemaVersion: "2.2"
+description: Port Forwarding
+parameters:
+  localPort:
+    type: String
+    default: "5432"
+mainSteps:
+  - action: aws:runShellScript
+    name: run
+    inputs:
+      runCommand:
+        - secret=$(aws secretsmanager get-secret-value --region ap-northeast-1 --secret-id aurora-user-secrets | jq .SecretString | jq fromjson)
+        - endpoint=$(echo $secret | jq -r .host)
+        - targetPort=$(echo $secret | jq -r .port)
+        - socat tcp4-listen:{{ localPort }},reuseaddr,fork TCP:$endpoint:$targetPort
+
