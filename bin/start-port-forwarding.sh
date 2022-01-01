@@ -1,7 +1,8 @@
 #!/bin/bash
 LOCAL_PORT=15432
+SECRET_NAME=aurora-user-secrets
 INSTANCE_ID=$( aws ec2 describe-instances --filter "Name=instance-state-name,Values=running" "Name=tag:Name,Values=BastionHost" --query "Reservations[].Instances[].InstanceId" --profile produser | jq -r '.[0]')
-SECRET=$(aws secretsmanager get-secret-value --region ap-northeast-1 --secret-id aurora-user-secrets --profile produser | jq .SecretString | jq fromjson)
+SECRET=$(aws secretsmanager get-secret-value --region ap-northeast-1 --secret-id $SECRET_NAME --profile produser | jq .SecretString | jq fromjson)
 PASSWORD=$(echo $SECRET | jq -r .password)
 USERNAME=$(echo $SECRET | jq -r .username)
 PORT=$(echo $SECRET | jq -r .port)

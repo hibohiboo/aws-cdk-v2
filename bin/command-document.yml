@@ -5,9 +5,6 @@ parameters:
   localPort:
     type: String
     default: "5432"
-  targetHost:
-    type: String
-    default: ""
 mainSteps:
   - action: aws:runShellScript
     name: run
