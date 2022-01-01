@@ -5,6 +5,7 @@ DOCUMENT_NAME=port-relay
 # aws ssm delete-document \
 #     --name ${DOCUMENT_NAME} \
 #     --profile produser
+
 cd $bin_dir && aws ssm create-document \
     --content file://command-document.yml \
     --name ${DOCUMENT_NAME} \
