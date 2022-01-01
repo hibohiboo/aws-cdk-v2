@@ -1,0 +1,20 @@
+---
+schemaVersion: "2.2"
+description: Port Forwarding
+parameters:
+  localPort:
+    type: String
+    default: "5432"
+  targetHost:
+    type: String
+    default: ""
+  targetPort:
+    type: String
+    default: "5432"
+mainSteps:
+  - action: aws:runShellScript
+    name: run
+    inputs:
+      runCommand:
+        - socat tcp4-listen:{{ localPort }},reuseaddr,fork TCP:{{ targetHost }}:{{ targetPort }}
+
