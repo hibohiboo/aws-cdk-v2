@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import type { PoolClient } from 'pg';
 const { RDS } = require('aws-sdk')
 // const username = 'hoge';
@@ -19,8 +19,8 @@ const { RDS } = require('aws-sdk')
 //   password: getPassword,
 // });
 
-const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
-const pool = new Pool({ connectionString });
+const connectionString = '';
+let pool: Pool | null = null;
 
 /**
  * Postgresクラス
@@ -33,6 +33,7 @@ class Postgres {
    * @return {Promise<void>}
    */
   async init() {
+    if (!pool) throw new Error('pool is undefined')
     this.#client = await pool.connect();
   }
 
@@ -84,6 +85,20 @@ class Postgres {
  * @return {Promise<Postgres>}
  */
 const getClient = async () => {
+  const { DB_PORT, DB_HOST, DB_USER } = process.env;
+  // if (!DB_PORT) throw new Error(`DB_PORT is undefined`)
+  // if (!DB_HOST) throw new Error(`DB_HOST is undefined`)
+  // if (!DB_USER) throw new Error(`DB_USER is undefined`)
+  // const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
+  // if (!pool) pool = new Pool({ connectionString });
+  const config: PoolConfig = {
+    port: 5432,
+    host: 'host.docker.internal',
+    user: 'admin',
+    password: 'secret',
+    database: 'postgres',
+  }
+  if (!pool) pool = new Pool(config);
   const postgres = new Postgres();
   await postgres.init();
   return postgres;
