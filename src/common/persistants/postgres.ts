@@ -1,6 +1,25 @@
 import { Pool } from 'pg';
 import type { PoolClient } from 'pg';
-const connectionString = 'postgresql://postgres:postgres@localhost:5432/hogehoge_db';
+const { RDS } = require('aws-sdk')
+// const username = 'hoge';
+// // https://node-postgres.com/features/connecting
+// const signerOptions = {
+//   region: 'us-east-1',
+//   hostname: 'example.aslfdewrlk.us-east-1.rds.amazonaws.com',
+//   port: 5432,
+//   username: 'api-user',
+// }
+// const signer = new RDS.Signer()
+// const getPassword = () => signer.getAuthToken(signerOptions)
+// const pool = new Pool({
+//   host: signerOptions.hostname,
+//   port: signerOptions.port,
+//   user: signerOptions.username,
+//   database: 'my-db',
+//   password: getPassword,
+// });
+
+const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
 const pool = new Pool({ connectionString });
 
 /**

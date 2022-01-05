@@ -1,7 +1,7 @@
 import type { Handler } from 'aws-lambda';
 import { format } from 'date-fns';
 import { formatDate } from '@/common/index';
-import { getPostgresClient } from '@/common/persistants/portgres';
+import { getPostgresClient } from '@/common/persistants/postgres';
 
 export const handler: Handler = async () => {
   const client = await getPostgresClient();

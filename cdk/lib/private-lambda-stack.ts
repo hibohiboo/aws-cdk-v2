@@ -3,8 +3,9 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { NODE_LAMBDA_LAYER_DIR } from './process/setup';
-import { SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 
 interface PrivateLambdaStackProps extends StackProps {
   vpcId: string
@@ -20,7 +21,7 @@ export class PrivateLambdaStack extends Stack {
     const vpc = Vpc.fromLookup(this, 'Vpc', { vpcId: props.vpcId })
     const securityGroup = SecurityGroup.fromLookupById(this, 'SecurityGroup', props.sgId);
     // subnetGroupNameはlowecaseで作成される
-    const vpcSubnets = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
+    const vpcSubnets = vpc.selectSubnets({ subnetType: SubnetType.PRIVATE_ISOLATED })
 
     const nodeModulesLayer = new lambda.LayerVersion(this, 'NodeModulesLayer',
       {
@@ -28,6 +29,13 @@ export class PrivateLambdaStack extends Stack {
         compatibleRuntimes: [lambda.Runtime.NODEJS_14_X]
       }
     );
+    const bundling = {
+      externalModules: [
+        'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
+        'date-fns', // Layrerに入れておきたいモジュール
+        'pg'
+      ],
+    }
 
     const helloLambda = new NodejsFunction(this, 'helloLambda', {
       runtime: lambda.Runtime.NODEJS_14_X,
@@ -36,19 +44,24 @@ export class PrivateLambdaStack extends Stack {
       vpc,
       vpcSubnets,
       securityGroups: [securityGroup],
-      bundling: {
-        externalModules: [
-          'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-          'date-fns', // Layrerに入れておきたいモジュール
+      bundling
+    });
 
-        ],
-
-      },
+    const electricLambda = new NodejsFunction(this, 'electricLambda', {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      entry: `../src/handler/api/getElectric.ts`,
+      layers: [nodeModulesLayer],
+      vpc,
+      vpcSubnets,
+      securityGroups: [securityGroup],
+      bundling,
       environment: {
-        END_POINT: 'proxy.proxy-chi1oriyu1of.ap-northeast-1.rds.amazonaws.com',
+        END_POINT: 'proxy.proxy-sample.ap-northeast-1.rds.amazonaws.com',
         RDS_SECRET_NAME: 'dbSecretName'
       }
     });
-
+    const api = new RestApi(this, 'ServerlessRestApi', { cloudWatchRole: false });
+    api.root.addResource('hello').addMethod('GET', new LambdaIntegration(helloLambda));
+    api.root.addResource('electric').addMethod('GET', new LambdaIntegration(electricLambda));
   }
 }
