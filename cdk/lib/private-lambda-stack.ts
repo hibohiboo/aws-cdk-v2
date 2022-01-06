@@ -1,4 +1,4 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
@@ -58,7 +58,8 @@ export class PrivateLambdaStack extends Stack {
       environment: {
         END_POINT: 'proxy.proxy-sample.ap-northeast-1.rds.amazonaws.com',
         RDS_SECRET_NAME: 'dbSecretName'
-      }
+      },
+      timeout: Duration.seconds(10)
     });
     const api = new RestApi(this, 'ServerlessRestApi', { cloudWatchRole: false });
     api.root.addResource('hello').addMethod('GET', new LambdaIntegration(helloLambda));

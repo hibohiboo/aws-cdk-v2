@@ -2,7 +2,8 @@ import { Pool } from 'pg';
 import { RDS } from 'aws-sdk'
 import * as fs from 'fs'
 import type { PoolClient } from 'pg';
-
+const RETRY_COUNT = 5;
+const RETRY_INTERVAL_MILLI_SECOND = 1000; // 1秒
 const signer = new RDS.Signer()
 let pool: Pool | null = null;
 /**
@@ -63,10 +64,14 @@ class Postgres {
   }
 }
 
+// 接続テスト用。3回目で接続成功
+let testCount = 0;
 const getPool = () => {
+  console.log('count', testCount++)
+
   if (process.env.AWS_SAM_LOCAL === 'true') {
     // ローカル実行用。 docker/.envで設定したPostgresへの接続内容。host.docker.internalはdockerコンテナ内からホスト上のサービスに対して接続するときのDNS名。
-    const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
+    const connectionString = testCount === 3 ? 'postgresql://admin:secret@host.docker.internal:5432/postgres' : '';
     return new Pool({ connectionString });
   }
 
@@ -109,10 +114,20 @@ const getPool = () => {
  * @return {Promise<Postgres>}
  */
 const getClient = async () => {
-  if (!pool) pool = getPool()
-  const postgres = new Postgres();
-  await postgres.init();
-  return postgres;
+  for (let i = 0; i < RETRY_COUNT; i++) {
+    try {
+      if (!pool) pool = getPool();
+      const postgres = new Postgres();
+      await postgres.init();
+      return postgres;
+    } catch (e) {
+      console.warn(`error try ${i}`, e);
+      console.warn(JSON.stringify(pool))
+      pool = null
+      await new Promise(resolve => globalThis.setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
+    }
+  }
+  throw new Error('connect failed')
 };
 
 export const getPostgresClient = getClient;
