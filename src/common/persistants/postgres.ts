@@ -1,7 +1,8 @@
 import { Pool } from 'pg';
-import { RDS } from 'aws-sdk'
+import { RDS, SecretsManager } from 'aws-sdk'
 import * as fs from 'fs'
 import type { PoolClient } from 'pg';
+
 const RETRY_COUNT = 5;
 const RETRY_INTERVAL_MILLI_SECOND = 1000; // 1秒
 const signer = new RDS.Signer()
@@ -87,20 +88,16 @@ const getPool = () => {
   if (!DB_USER) throw new Error(`DB_USER is undefined`)
   if (!DB_DBNAME) throw new Error(`DB_DBNAME is undefined`)
   if (!AWS_REGION) throw new Error('AWS_REGION is undefined') // RDSとLambdaが同一のリージョンに存在する想定
-  if (!SECRET_KEY_ID) throw new Error(`SECRET_KEY_ID is undefined`)
-  if (!SECRET_ACCESS_KEY) throw new Error(`SECRET_ACCESS_KEY is undefined`)
 
   const signerOptions = {
-    credentials: {
-      accessKeyId: SECRET_KEY_ID,
-      secretAccessKey: SECRET_ACCESS_KEY
-    },
     region: AWS_REGION,
     hostname: DB_HOST, // 'example.aslfdewrlk.us-east-1.rds.amazonaws.com',
     port: Number(DB_PORT),
     username: DB_USER,
   }
   // https://node-postgres.com/features/connecting
+  // https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/configuration-database.html
+  // https://htnosm.hatenablog.com/entry/2021/08/23/090000
 
   return new Pool({
     host: signerOptions.hostname,
@@ -128,6 +125,8 @@ const getClient = async () => {
       await postgres.init();
       return postgres;
     } catch (e) {
+      // IAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生
+      // The password that was provided for the role ロール名 is wrong
       console.warn(`error try ${i}`, e);
       // pool = null; //  getPool()で失敗する接続文字列でもインスタンスは返却される。テスト用。
       await new Promise(resolve => globalThis.setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ

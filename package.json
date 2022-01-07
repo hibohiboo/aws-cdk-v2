@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "bundle": "esbuild --bundle src/common/index.ts --outfile=cdk/bundle-common/nodejs/index.js --target=node14 --format=cjs"
+    "bundle": "esbuild --bundle src/common/index.ts --outfile=cdk/bundle-common/nodejs/index.js --target=node14 --format=cjs",
+    "bundleData": "cp -r src/common/data cdk/bundle-node_modules/nodejs/data"
   },
   "repository": {
     "type": "git",

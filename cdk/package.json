@@ -10,6 +10,7 @@
     "test": "jest",
     "cdk": "cdk",
     "createLayer": "ts-node lib/process/pre.ts",
+    "copyData": "cd .. && npm run bundleData",
     "predev": "npm run createLayer",
     "dev": "sam-beta-cdk local start-api",
     "predeploy": "npm run createLayer",
@@ -17,6 +18,7 @@
     "vpc-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc.ts\" deploy VpcStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "aurora-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/aurora.ts\" deploy AuroraStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "bastion-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/bastion.ts\" deploy BastionStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
+    "prelambda-deploy": "npm run createLayer && npm run copyData",
     "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
   },
   "devDependencies": {

@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
-import { AccountPrincipal, Role } from 'aws-cdk-lib/aws-iam';
+import { AccountPrincipal, Effect, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 
 interface AuroraStackProps extends StackProps {
   vpcId: string

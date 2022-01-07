@@ -4,21 +4,29 @@ import * as cdk from 'aws-cdk-lib';
 import { PrivateLambdaStack } from '../lib/private-lambda-stack';
 import { config } from 'dotenv'
 config();
-if (!process.env.VPC_ID) throw Error('please set environment variable VPC_ID')
-if (!process.env.PRIVATE_SG_ID) throw Error('please set environment variable PRIVATE_SG_ID')
-if (!process.env.SUBNET_GROUP_NAME) throw Error('please set environment variable SUBNET_GROUP_NAME')
-if (!process.env.DB_SECRET_NAME) throw Error('please set environment variable DB_SECRET_NAME')
-
 
 const app = new cdk.App();
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION
 }
+
+const envNames = ['VPC_ID', 'PRIVATE_LAMBDA_SG_ID', 'DB_USER_RESOURCE_ARN', 'DB_ADMIN_NAME', 'DB_PROXY_ENDPOINT'] as const
+const checkEnvs = (e: any): e is Record<(typeof envNames)[number], string> => {
+  for (const a of envNames) {
+    if (!e[a]) throw new Error(`please set environment variable ${a}`)
+  }
+  return true
+}
+if (!checkEnvs(process.env)) throw new Error('到達しない')
+
 new PrivateLambdaStack(app, 'PrivateLambdaStack', {
   env,
   vpcId: process.env.VPC_ID,
-  sgId: process.env.PRIVATE_SG_ID,
-  subnetGroupName: process.env.SUBNET_GROUP_NAME,
-  dbSecretName: process.env.DB_SECRET_NAME,
+  sgId: process.env.PRIVATE_LAMBDA_SG_ID,
+  rdsProxyArn: process.env.DB_USER_RESOURCE_ARN,
+  dbAdminName: process.env.DB_ADMIN_NAME,
+  dbProxyEndpont: process.env.DB_PROXY_ENDPOINT
 });
+
+

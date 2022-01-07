@@ -1,7 +1,9 @@
 import { Aspects, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
+
+const DB_PORT = 5432;
 
 interface VpcStackProps extends StackProps {
   subnetGroupName: string
@@ -71,11 +73,11 @@ export class VpcStack extends Stack {
     // })
 
     //------------------ Aurora用の設定 ----------------------------------
-    const securityGroupPrivate = new SecurityGroup(this, 'SecurityGroupForPrivateSubnets', {
+    const dbConnectionGroup = new SecurityGroup(this, 'SecurityGroupForPrivateSubnets', {
       vpc,
-      description: 'seburity group for Aurora and vpc lambda'
+      description: 'seburity group for Aurora'
     })
-    Tags.of(securityGroupPrivate).add('Name', 'SecurityGroupForPrivateSubnets');
+    Tags.of(dbConnectionGroup).add('Name', 'SecurityGroupForPrivateSubnets');
     // securityGroupPrivate.addIngressRule(Peer.ipv4(cidr), Port.allTcp());
 
     const subnetGroupForAurora = new SubnetGroup(this, 'SubnetGroupForAurora', {
@@ -92,7 +94,16 @@ export class VpcStack extends Stack {
       description: 'seburity group for bastion'
     })
     Tags.of(securityGroupPublic).add('Name', 'SecurityGroupForPublicSubnets');
-    securityGroupPrivate.addIngressRule(securityGroupPublic, Port.tcp(5432));
+    dbConnectionGroup.addIngressRule(securityGroupPublic, Port.tcp(DB_PORT));
+
+    //------------------ Lambda用の設定 ----------------------------------
+    // We need this security group to add an ingress rule and allow our lambda to query the proxy
+    const lambdaToRDSProxyGroup = new SecurityGroup(this, 'Lambda to RDS Proxy Connection', {
+      vpc,
+      description: 'seburity group for lambda'
+    });
+    Tags.of(lambdaToRDSProxyGroup).add('Name', 'SecurityGroupForPrivateSubnetsForLambda');
+    dbConnectionGroup.addIngressRule(lambdaToRDSProxyGroup, Port.tcp(DB_PORT), 'allow lambda connection');
     //------------------ 共通設定 ----------------------------------
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
