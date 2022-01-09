@@ -9,9 +9,8 @@ interface AuroraStackProps extends StackProps {
   vpcId: string
   sgId: string
   subnetGroupName: string
-  dbSecretName: string
   dbAdminName: string
-  dbUserPassword: string
+  dbAdminSecretName: string
   dbReadOnlyUserName: string
   dbReadOnlyUserSecretName: string
 }
@@ -31,16 +30,7 @@ export class AuroraStack extends Stack {
     // subnetGroupNameはlowecaseで作成される
     const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
 
-    const secret = new Secret(this, 'DBCredentioalSecret', {
-      secretName: props.dbSecretName,
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: props.dbAdminName }),
-        excludePunctuation: true, // '、/、"、@、スペースはpostgresのパスワードに利用できないので除外
-        includeSpace: false,
-        generateStringKey: 'password'
-      }
-    })
-    Tags.of(secret).add('Name', props.dbSecretName);
+    const secret = this.createSecret({ secretName: props.dbAdminSecretName, rdsName: props.dbAdminName });
 
     // default..aurora-postgresql11が見つからない。。
     // const AURORA_POSTGRES_ENGINE_VERSION = AuroraPostgresEngineVersion.VER_11_9; // LTSのバージョンを選択 2021.12.10
@@ -65,16 +55,7 @@ export class AuroraStack extends Stack {
     });
 
     // RDSでの作成ユーザをシークレットに登録
-    const secretForDBUser = new Secret(this, 'DBCredentioalSecretForDBUser', {
-      secretName: props.dbReadOnlyUserSecretName,
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: props.dbReadOnlyUserName }),
-        excludePunctuation: true,
-        includeSpace: false,
-        generateStringKey: 'password'
-      }
-    })
-    Tags.of(secretForDBUser).add('Name', props.dbReadOnlyUserSecretName);
+    const secretForDBUser = this.createSecret({ secretName: props.dbReadOnlyUserSecretName, rdsName: props.dbReadOnlyUserName });
 
     const proxy = new DatabaseProxy(this, 'Proxy', {
       proxyTarget: ProxyTarget.fromCluster(cluster),
@@ -93,6 +74,19 @@ export class AuroraStack extends Stack {
 
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
+  }
 
+  private createSecret(props: { secretName: string, rdsName: string }) {
+    const secret = new Secret(this, 'DBCredentioalSecret', {
+      secretName: props.secretName,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ username: props.rdsName }),
+        excludePunctuation: true, // '、/、"、@、スペースはpostgresのパスワードに利用できないので除外
+        includeSpace: false,
+        generateStringKey: 'password'
+      }
+    })
+    Tags.of(secret).add('Name', props.secretName);
+    return secret;
   }
 }

@@ -140,7 +140,7 @@ const getClient = async () => {
 
       console.warn(`error try ${i}`, e);
       // pool = null; // テスト用。 getPool()で失敗する接続文字列でもインスタンスは返却される。
-      await new Promise(resolve => globalThis.setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
+      await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
     }
   }
   throw new Error('connect failed')

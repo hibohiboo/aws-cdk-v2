@@ -1,11 +1,12 @@
-import { Duration, Stack, StackProps } from 'aws-cdk-lib';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Aspects, Duration, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
+import { NodejsFunction, BundlingOptions } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { NODE_LAMBDA_LAYER_DIR } from './process/setup';
-import { SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { ISecurityGroup, IVpc, SecurityGroup, SelectedSubnets, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+
 interface PrivateLambdaStackProps extends StackProps {
   vpcId: string
   sgId: string
@@ -35,16 +36,20 @@ export class PrivateLambdaStack extends Stack {
         'pg'
       ],
     }
-
-    const helloLambda = new NodejsFunction(this, 'helloLambda', {
-      runtime: lambda.Runtime.NODEJS_14_X,
-      entry: `../src/handler/api/hello.ts`,
+    const lambdaParamsDefault = {
       layers: [nodeModulesLayer],
       vpc,
       vpcSubnets,
       securityGroups: [securityGroup],
       bundling
-    });
+    }
+
+    const helloLambda = this.createLambda({
+      ...lambdaParamsDefault,
+      entry: `../src/handler/api/hello.ts`,
+      name: 'hellorLambda',
+      descritption: 'サンプル用メッセージ表示'
+    })
 
     const rdsEnv = {
       DB_PORT: '5432',
@@ -58,85 +63,104 @@ export class PrivateLambdaStack extends Stack {
     }
     const rdsAdminResource = `${props.rdsProxyArn}/${props.dbAdminName}`;
     const rdsReadOnlyUserResource = `${props.rdsProxyArn}/${props.dbReadOnlyUserName}`;
+    const adminPolicy = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['rds-db:connect'],
+      resources: [rdsAdminResource],
+    })
+    const readOnlyUserPolicy = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['rds-db:connect'],
+      resources: [rdsReadOnlyUserResource],
+    })
 
-    const electricLambda = new NodejsFunction(this, 'electricLambda', {
-      runtime: lambda.Runtime.NODEJS_14_X,
+
+    const electricLambda = this.createLambda({
+      ...lambdaParamsDefault,
       entry: `../src/handler/api/getElectric.ts`,
-      layers: [nodeModulesLayer],
-      vpc,
-      vpcSubnets,
-      securityGroups: [securityGroup],
-      bundling,
+      name: 'electricLambda',
+      descritption: 'RDSAdminでテーブル参照',
       environment: { ...rdsEnv },
-      initialPolicy: [new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['rds-db:connect'],
-        resources: [rdsAdminResource],
-      })],
-      timeout: Duration.seconds(10),
-    });
+      initialPolicy: [adminPolicy],
+      timeoutSec: 10, // DBへの再接続を1秒置き、3回まで行うため、デフォルトの3秒より延ばしておく
+    })
+
     const api = new RestApi(this, 'ServerlessRestApi', { cloudWatchRole: false });
     api.root.addResource('hello').addMethod('GET', new LambdaIntegration(helloLambda));
     const electricResource = api.root.addResource('electric')
     electricResource.addMethod('GET', new LambdaIntegration(electricLambda));
 
-
-    const electricLambda2 = new NodejsFunction(this, 'electricLambda2', {
-      runtime: lambda.Runtime.NODEJS_14_X,
+    const electricLambda2 = this.createLambda({
+      ...lambdaParamsDefault,
       entry: `../src/handler/api/getElectric.ts`,
-      layers: [nodeModulesLayer],
-      vpc,
-      vpcSubnets,
-      securityGroups: [securityGroup],
-      bundling,
+      name: 'electricLambda2',
+      descritption: 'RDS 読取専用ユーザでテーブル参照',
       environment: { ...rdsEnvReadOnly },
-      initialPolicy: [new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['rds-db:connect'],
-        resources: [rdsReadOnlyUserResource],
-      })],
-      timeout: Duration.seconds(10),
-    });
+      initialPolicy: [readOnlyUserPolicy],
+      timeoutSec: 10,
+    })
+
     const electricReadonlyResource = api.root.addResource('electric-readonly');
     electricReadonlyResource.addMethod('GET', new LambdaIntegration(electricLambda2));
 
-    const electricLambda3 = new NodejsFunction(this, 'electricLambda3', {
-      runtime: lambda.Runtime.NODEJS_14_X,
+    const electricLambda3 = this.createLambda({
+      ...lambdaParamsDefault,
       entry: `../src/handler/api/postElectric.ts`,
-      layers: [nodeModulesLayer],
-      vpc,
-      vpcSubnets,
-      securityGroups: [securityGroup],
-      bundling,
+      name: 'electricLambda3',
+      descritption: 'RDS 読取専用ユーザでテーブル挿入',
       environment: { ...rdsEnvReadOnly },
-      initialPolicy: [new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['rds-db:connect'],
-        resources: [rdsReadOnlyUserResource],
-      })],
-      timeout: Duration.seconds(10),
-    });
+      initialPolicy: [readOnlyUserPolicy],
+      timeoutSec: 10,
+    })
+
     electricReadonlyResource.addMethod('POST', new LambdaIntegration(electricLambda3));
 
-    const electricLambda4 = new NodejsFunction(this, 'electricLambda4', {
-      runtime: lambda.Runtime.NODEJS_14_X,
+    const electricLambda4 = this.createLambda({
+      ...lambdaParamsDefault,
       entry: `../src/handler/api/postElectric.ts`,
-      layers: [nodeModulesLayer],
-      vpc,
-      vpcSubnets,
-      securityGroups: [securityGroup],
-      bundling,
+      name: 'electricLambda4',
+      descritption: 'RDSAdminでテーブル挿入',
       environment: { ...rdsEnv },
-      initialPolicy: [new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['rds-db:connect'],
-        resources: [rdsAdminResource],
-      })],
-      timeout: Duration.seconds(10), // DBへの再接続を1秒置き、3回まで行うため、デフォルトの3秒より延ばしておく
-    });
+      initialPolicy: [adminPolicy],
+      timeoutSec: 10,
+    })
     electricResource.addMethod('POST', new LambdaIntegration(electricLambda4));
+
     // // 認証情報へのアクセス許可
     // const secret = Secret.fromSecretNameV2(this, 'RDSSecret', props.dbSecretName);
     // secret.grantRead(electricLambda);
+
+    Aspects.of(this).add(new Tag('Stack', id));
+  }
+
+  private createLambda(props: {
+    layers: lambda.LayerVersion[]
+    vpc: IVpc
+    vpcSubnets: SelectedSubnets
+    securityGroups: ISecurityGroup[]
+    bundling: BundlingOptions
+    name: string
+    descritption: string
+    entry: string
+    environment?: Record<string, string>
+    initialPolicy?: PolicyStatement[]
+    timeoutSec?: number
+  }) {
+    const func = new NodejsFunction(this, props.name, {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      entry: props.entry,
+      functionName: props.name,
+      description: props.descritption,
+      layers: props.layers,
+      vpc: props.vpc,
+      vpcSubnets: props.vpcSubnets,
+      securityGroups: props.securityGroups,
+      bundling: props.bundling,
+      environment: props.environment,
+      initialPolicy: props.initialPolicy,
+      timeout: props.timeoutSec ? Duration.seconds(props.timeoutSec) : undefined,
+    });
+    Tags.of(func).add('Name', props.name);
+    return func;
   }
 }
