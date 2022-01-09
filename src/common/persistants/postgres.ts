@@ -70,19 +70,19 @@ class Postgres {
 const getPool = () => {
   if (process.env.AWS_SAM_LOCAL === 'true') {
     // ローカル実行用。admin。 docker/.envで設定したPostgresへの接続内容。host.docker.internalはdockerコンテナ内からホスト上のサービスに対して接続するときのDNS名。
-    // const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
+    const connectionString = 'postgresql://admin:secret@host.docker.internal:5432/postgres';
 
     // 接続テスト用
     // const connectionString = testCount === 3 ? 'postgresql://admin:secret@host.docker.internal:5432/postgres' : '';
 
     // ローカル実行用。user1。 GRANTでテーブルへの権限をつけ忘れると、「error: permission denied for relation electric」って言われる。（electricはテーブル名)
-    const connectionString = 'postgresql://user1:pass@host.docker.internal:5432/postgres';
+    // const connectionString = 'postgresql://user1:pass@host.docker.internal:5432/postgres';
 
 
     return new Pool({ connectionString });
   }
 
-  const { DB_PORT, DB_HOST, DB_USER, DB_DBNAME, SECRET_ACCESS_KEY, SECRET_KEY_ID, AWS_REGION } = process.env;
+  const { DB_PORT, DB_HOST, DB_USER, DB_DBNAME, AWS_REGION } = process.env;
   if (!DB_PORT) throw new Error(`DB_PORT is undefined`)
   if (!DB_HOST) throw new Error(`DB_HOST is undefined`)
   if (!DB_USER) throw new Error(`DB_USER is undefined`)
@@ -90,9 +90,9 @@ const getPool = () => {
   if (!AWS_REGION) throw new Error('AWS_REGION is undefined') // RDSとLambdaが同一のリージョンに存在する想定
 
   const signerOptions = {
-    region: AWS_REGION,
+    region: AWS_REGION,// us-east-1,
     hostname: DB_HOST, // 'example.aslfdewrlk.us-east-1.rds.amazonaws.com',
-    port: Number(DB_PORT),
+    port: Number(DB_PORT), // us-east-1,
     username: DB_USER,
   }
   // https://node-postgres.com/features/connecting
@@ -104,6 +104,7 @@ const getPool = () => {
     port: signerOptions.port,
     user: signerOptions.username,
     database: DB_DBNAME,
+    // IAM認証のため、パスワードの代わりにトークンを使用する。
     password: () => signer.getAuthToken(signerOptions),
     ssl: {
       // https://www.amazontrust.com/repository/AmazonRootCA1.pem
@@ -125,10 +126,20 @@ const getClient = async () => {
       await postgres.init();
       return postgres;
     } catch (e) {
-      // IAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生
+      // RDS ProxyのIAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生することがある
+      // 原因1: lambdaのPolicyStatement不足(rds-connect)
+      // 原因2: lambdaのPolicyStatementに指定したユーザ名と接続しようとしているユーザ名が異なる
+
+      // This RDS proxy has no credentials for the role user1. Check the credentials for this role and try again
+      // 原因: ＣＤＫの、new DatabaseProxy(this, 'Proxy', { secrets: [],...)のsecretsの配列に使用したいユーザ・パスワードが入っていない。
+      // permission denied for table electric
+      // 原因: 使用しているユーザに該当するテーブルへの操作権限がない（insertなど）
+
       // The password that was provided for the role ロール名 is wrong
+      // 原因: IAM認証を使用していないのにgetAuthTokenを使って接続しようとしている。IAM認証を使わない場合は、passwordにはパスワードの文字列が必要
+
       console.warn(`error try ${i}`, e);
-      // pool = null; //  getPool()で失敗する接続文字列でもインスタンスは返却される。テスト用。
+      // pool = null; // テスト用。 getPool()で失敗する接続文字列でもインスタンスは返却される。
       await new Promise(resolve => globalThis.setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
     }
   }

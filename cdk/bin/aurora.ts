@@ -4,18 +4,23 @@ import { App } from 'aws-cdk-lib';
 import { AuroraStack } from '../lib/aurora-stack';
 import { config } from 'dotenv'
 config();
-if (!process.env.VPC_ID) throw Error('please set environment variable VPC_ID')
-if (!process.env.PRIVATE_SG_ID) throw Error('please set environment variable PRIVATE_SG_ID')
-if (!process.env.SUBNET_GROUP_NAME) throw Error('please set environment variable SUBNET_GROUP_NAME')
-if (!process.env.DB_SECRET_NAME) throw Error('please set environment variable DB_SECRET_NAME')
-if (!process.env.DB_ADMIN_NAME) throw Error('please set environment variable DB_ADMIN_NAME')
-if (!process.env.DB_USER_PASSWORD) throw Error('please set environment variable DB_USER_PASSWORD')
 
-const app = new App();
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION
 }
+
+const envNames = ['VPC_ID', 'PRIVATE_SG_ID', 'SUBNET_GROUP_NAME', 'DB_SECRET_NAME', 'DB_ADMIN_NAME', 'DB_USER_PASSWORD', 'DB_USER_SECRET_NAME', 'DB_USER_NAME'] as const
+const checkEnvs = (e: any): e is Record<(typeof envNames)[number], string> => {
+  for (const a of envNames) {
+    if (!e[a]) throw new Error(`please set environment variable ${a}`)
+  }
+  return true
+}
+if (!checkEnvs(process.env)) throw new Error('到達しない')
+
+const app = new App();
+
 new AuroraStack(app, 'AuroraStack', {
   env,
   vpcId: process.env.VPC_ID,
@@ -23,5 +28,7 @@ new AuroraStack(app, 'AuroraStack', {
   subnetGroupName: process.env.SUBNET_GROUP_NAME,
   dbSecretName: process.env.DB_SECRET_NAME,
   dbAdminName: process.env.DB_ADMIN_NAME,
-  dbUserPassword: process.env.DB_USER_PASSWORD
+  dbUserPassword: process.env.DB_USER_PASSWORD,
+  dbReadOnlyUserSecretName: process.env.DB_USER_SECRET_NAME,
+  dbReadOnlyUserName: process.env.DB_USER_NAME
 });

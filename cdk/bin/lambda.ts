@@ -11,7 +11,7 @@ const env = {
   region: process.env.CDK_DEFAULT_REGION
 }
 
-const envNames = ['VPC_ID', 'PRIVATE_LAMBDA_SG_ID', 'DB_USER_RESOURCE_ARN', 'DB_ADMIN_NAME', 'DB_PROXY_ENDPOINT'] as const
+const envNames = ['VPC_ID', 'PRIVATE_LAMBDA_SG_ID', 'DB_USER_RESOURCE_ARN', 'DB_ADMIN_NAME', 'DB_PROXY_ENDPOINT', 'DB_USER_NAME'] as const
 const checkEnvs = (e: any): e is Record<(typeof envNames)[number], string> => {
   for (const a of envNames) {
     if (!e[a]) throw new Error(`please set environment variable ${a}`)
@@ -26,7 +26,8 @@ new PrivateLambdaStack(app, 'PrivateLambdaStack', {
   sgId: process.env.PRIVATE_LAMBDA_SG_ID,
   rdsProxyArn: process.env.DB_USER_RESOURCE_ARN,
   dbAdminName: process.env.DB_ADMIN_NAME,
-  dbProxyEndpont: process.env.DB_PROXY_ENDPOINT
+  dbProxyEndpont: process.env.DB_PROXY_ENDPOINT,
+  dbReadOnlyUserName: process.env.DB_USER_NAME
 });
 
 

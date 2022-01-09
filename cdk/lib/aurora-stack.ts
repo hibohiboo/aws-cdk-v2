@@ -12,6 +12,8 @@ interface AuroraStackProps extends StackProps {
   dbSecretName: string
   dbAdminName: string
   dbUserPassword: string
+  dbReadOnlyUserName: string
+  dbReadOnlyUserSecretName: string
 }
 
 export class AuroraStack extends Stack {
@@ -62,9 +64,21 @@ export class AuroraStack extends Stack {
       credentials: Credentials.fromSecret(secret)
     });
 
+    // RDSでの作成ユーザをシークレットに登録
+    const secretForDBUser = new Secret(this, 'DBCredentioalSecretForDBUser', {
+      secretName: props.dbReadOnlyUserSecretName,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ username: props.dbReadOnlyUserName }),
+        excludePunctuation: true,
+        includeSpace: false,
+        generateStringKey: 'password'
+      }
+    })
+    Tags.of(secretForDBUser).add('Name', props.dbReadOnlyUserSecretName);
+
     const proxy = new DatabaseProxy(this, 'Proxy', {
       proxyTarget: ProxyTarget.fromCluster(cluster),
-      secrets: [secret],
+      secrets: [secret, secretForDBUser],
       vpc,
       securityGroups: [securityGroup],
       requireTLS: true,
@@ -75,6 +89,7 @@ export class AuroraStack extends Stack {
     const role = new Role(this, 'DBProxyRole', { assumedBy: new AccountPrincipal(this.account) });
     Tags.of(role).add('Name', 'AuroraProxyRole');
     proxy.grantConnect(role, props.dbAdminName); // Grant the role connection access to the DB Proxy for database user 'admin'.
+    proxy.grantConnect(role, props.dbReadOnlyUserName);
 
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
