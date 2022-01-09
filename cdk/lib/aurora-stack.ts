@@ -1,9 +1,9 @@
 import { Aspects, RemovalPolicy, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, ParameterGroup, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
-import { AccountPrincipal, Effect, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
+import { AccountPrincipal, Role } from 'aws-cdk-lib/aws-iam';
 
 interface AuroraStackProps extends StackProps {
   vpcId: string
@@ -50,16 +50,24 @@ export class AuroraStack extends Stack {
       },
       instances: 1,
       subnetGroup,
-      // parameterGroup,
+      // https://dev.classmethod.jp/articles/cdk-practice-21-rds-parameter-group/
+      parameterGroup: new ParameterGroup(this, 'rds params', {
+        engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_9 }),
+        description: 'Cluster Parameter Group for RDS',
+        parameters: { time_zone: 'JST' },
+      }),
       credentials: Credentials.fromSecret(secret)
     });
+
+    // https://docs.aws.amazon.com/cdk/api/v2//docs/aws-cdk-lib.aws_rds-readme.html
+    // パスワードのローテーション設定。 ローテーション感覚はデフォルトは30日。パスワードに使用しない文字はデフォルトで、" %+~`#$&*()|[]{}:;<>?!'/@\"\\"
+    cluster.addRotationSingleUser();
 
     // RDSでの作成ユーザをシークレットに登録
     const secretForDBUser = this.createSecret({ secretName: props.dbReadOnlyUserSecretName, rdsName: props.dbReadOnlyUserName });
 
-    const proxy = new DatabaseProxy(this, 'Proxy', {
-      proxyTarget: ProxyTarget.fromCluster(cluster),
-      secrets: [secret, secretForDBUser],
+    const proxy = cluster.addProxy('Proxy', {
+      secrets: [cluster.secret!, secretForDBUser],
       vpc,
       securityGroups: [securityGroup],
       requireTLS: true,
