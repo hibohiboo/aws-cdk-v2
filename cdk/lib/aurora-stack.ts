@@ -77,7 +77,7 @@ export class AuroraStack extends Stack {
   }
 
   private createSecret(props: { secretName: string, rdsName: string }) {
-    const secret = new Secret(this, 'DBCredentioalSecret', {
+    const secret = new Secret(this, props.secretName, {
       secretName: props.secretName,
       generateSecretString: {
         secretStringTemplate: JSON.stringify({ username: props.rdsName }),
