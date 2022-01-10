@@ -33,11 +33,6 @@ export class AuroraStack extends Stack {
     // subnetGroupNameはlowecaseで作成されている
     const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
 
-    // const secret = new DatabaseSecret(this, props.dbAdminSecretName, {
-    //   secretName: props.dbAdminSecretName,
-    //   username: props.dbAdminName
-    // });
-    // Tags.of(secret).add('Name', props.dbAdminSecretName);
     const secret = this.createSecret({ secretName: props.dbAdminSecretName, rdsName: props.dbAdminName });
 
     const cluster = new DatabaseCluster(this, 'clusterForAurora', {
@@ -71,22 +66,13 @@ export class AuroraStack extends Stack {
     // RDSでの作成ユーザをシークレットに登録
     const secretForDBUser = this.createSecret({ secretName: props.dbReadOnlyUserSecretName, rdsName: props.dbReadOnlyUserName });
 
-    // const proxy = cluster.addProxy('Proxy', {
-    //   secrets: [cluster.secret!, secretForDBUser],
-    //   vpc,
-    //   securityGroups: [securityGroup],
-    //   requireTLS: true,
-    //   iamAuth: true
-    // });
-    const proxy = new DatabaseProxy(this, 'RDSProxy', {
-      proxyTarget: ProxyTarget.fromCluster(cluster),
-      secrets: [secret, secretForDBUser],
+    const proxy = cluster.addProxy('Proxy', {
+      secrets: [cluster.secret!, secretForDBUser],
       vpc,
       securityGroups: [securityGroup],
       requireTLS: true,
       iamAuth: true
     });
-
     Tags.of(proxy).add('Name', 'AuroraRDSProxy');
 
     const role = new Role(this, 'DBProxyRole', { assumedBy: new AccountPrincipal(this.account) });
@@ -110,22 +96,10 @@ export class AuroraStack extends Stack {
   }
 
   private createSecret(props: { secretName: string, rdsName: string }) {
-    // バグってそう。 以下を使用すると「The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again」が発生
-    // const secret = new DatabaseSecret(this, props.dbReadOnlyUserSecretName, {
-    //   secretName: props.secretName,
-    //   username: props.rdsName
-    // });
-    // Tags.of(secret).add('Name', props.dbAdminSecretName);
-
-    const secret = new Secret(this, props.secretName, {
+    const secret = new DatabaseSecret(this, props.secretName, {
       secretName: props.secretName,
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ username: props.rdsName }),
-        excludePunctuation: true, // '、/、"、@、スペースはpostgresのパスワードに利用できないので除外
-        includeSpace: false,
-        generateStringKey: 'password'
-      }
-    })
+      username: props.rdsName
+    });
     Tags.of(secret).add('Name', props.secretName);
     return secret;
   }
