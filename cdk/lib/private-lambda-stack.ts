@@ -10,10 +10,11 @@ import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 interface PrivateLambdaStackProps extends StackProps {
   vpcId: string
   sgId: string
-  rdsProxyArn: string
+  rdsProxyResourceId: string
   dbAdminName: string
-  dbProxyEndpont: string
+  dbProxyEndpoint: string
   dbReadOnlyUserName: string
+  dbProxyReadOnlyEndpoint: string
 }
 
 export class PrivateLambdaStack extends Stack {
@@ -53,16 +54,19 @@ export class PrivateLambdaStack extends Stack {
 
     const rdsEnv = {
       DB_PORT: '5432',
-      DB_HOST: props.dbProxyEndpont,
+      DB_HOST: props.dbProxyEndpoint,
       DB_USER: props.dbAdminName,
       DB_DBNAME: 'postgres',
     }
     const rdsEnvReadOnly = {
       ...rdsEnv,
+      DB_HOST: props.dbProxyReadOnlyEndpoint,
       DB_USER: props.dbReadOnlyUserName,
+      IS_READ_ONLY: 'true'
     }
-    const rdsAdminResource = `${props.rdsProxyArn}/${props.dbAdminName}`;
-    const rdsReadOnlyUserResource = `${props.rdsProxyArn}/${props.dbReadOnlyUserName}`;
+    const dbConnectArn = `arn:aws:rds-db:${this.region}:${this.account}:dbuser:${props.rdsProxyResourceId}`
+    const rdsAdminResource = `${dbConnectArn}/${props.dbAdminName}`;
+    const rdsReadOnlyUserResource = `${dbConnectArn}/${props.dbReadOnlyUserName}`;
     const adminPolicy = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['rds-db:connect'],

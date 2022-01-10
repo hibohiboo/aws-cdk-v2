@@ -99,6 +99,13 @@ const getPool = () => {
   // https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/configuration-database.html
   // https://htnosm.hatenablog.com/entry/2021/08/23/090000
 
+  // 読取専用エンドポイントの場合は verify-ca で接続(ホストのドメインに.endpointが含まれるため証明書のコモンネームと不一致となるため検証スキップ)
+  const ssl = process.env.IS_READ_ONLY ? {
+    ca: fs.readFileSync('/opt/nodejs/data/AmazonRootCA1.pem'),
+    requestCert: true,
+    rejectUnauthorized: false
+  } : { ca: fs.readFileSync('/opt/nodejs/data/AmazonRootCA1.pem') };
+
   return new Pool({
     host: signerOptions.hostname,
     port: signerOptions.port,
@@ -106,12 +113,7 @@ const getPool = () => {
     database: DB_DBNAME,
     // IAM認証のため、パスワードの代わりにトークンを使用する。
     password: () => signer.getAuthToken(signerOptions),
-    ssl: {
-      // https://www.amazontrust.com/repository/AmazonRootCA1.pem
-      ca: fs.readFileSync('/opt/nodejs/data/AmazonRootCA1.pem'),
-      requestCert: true,
-      rejectUnauthorized: false
-    }
+    ssl
   });
 }
 
