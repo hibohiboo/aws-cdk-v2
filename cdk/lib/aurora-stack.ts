@@ -1,10 +1,9 @@
 import { Aspects, RemovalPolicy, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, CfnDBProxyEndpoint, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, DatabaseSecret, ParameterGroup, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
-import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
+import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { AuroraPostgresEngineVersion, CfnDBProxyEndpoint, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseSecret, ParameterGroup, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { AccountPrincipal, Role } from 'aws-cdk-lib/aws-iam';
-import { StringListParameter, StringParameter } from 'aws-cdk-lib/aws-ssm';
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 
 interface AuroraStackProps extends StackProps {
   vpcId: string
