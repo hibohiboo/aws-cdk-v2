@@ -17,11 +17,7 @@ echo username= $USERNAME
 echo password= $PASSWORD
 
 # TCPポートリレー 開始
-aws ssm send-command \
-  --instance-ids ${INSTANCE_ID} \
-  --document-name ${DOCUMENT_NAME} \
-  --profile produser
-
+SEND_COMMAND_RESULT=$(aws ssm send-command --instance-ids ${INSTANCE_ID} --document-name ${DOCUMENT_NAME} --profile produser)
 
 # ポートフォワーディング開始
 aws ssm start-session \
@@ -29,7 +25,3 @@ aws ssm start-session \
     --document-name AWS-StartPortForwardingSession \
     --parameters portNumber=$PORT,localPortNumber=$LOCAL_PORT \
     --profile produser
-
-
-
-

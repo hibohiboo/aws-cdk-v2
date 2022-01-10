@@ -1,9 +1,10 @@
 import { Aspects, RemovalPolicy, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraPostgresEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseSecret, ParameterGroup, SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { InstanceClass, InstanceSize, InstanceType, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
+import { AuroraPostgresEngineVersion, CfnDBProxyEndpoint, Credentials, DatabaseCluster, DatabaseClusterEngine, DatabaseProxy, DatabaseSecret, ParameterGroup, ProxyTarget, SubnetGroup } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { AccountPrincipal, Role } from 'aws-cdk-lib/aws-iam';
+import { StringListParameter, StringParameter } from 'aws-cdk-lib/aws-ssm';
 
 interface AuroraStackProps extends StackProps {
   vpcId: string
@@ -13,6 +14,7 @@ interface AuroraStackProps extends StackProps {
   dbAdminSecretName: string
   dbReadOnlyUserName: string
   dbReadOnlyUserSecretName: string
+  ssmParamKeySubnetIds: string
 }
 
 export class AuroraStack extends Stack {
@@ -31,15 +33,16 @@ export class AuroraStack extends Stack {
     // subnetGroupNameはlowecaseで作成されている
     const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
 
-    const secret = new DatabaseSecret(this, props.dbAdminSecretName, {
-      secretName: props.dbAdminSecretName,
-      username: props.dbAdminName
-    });
-    Tags.of(secret).add('Name', props.dbAdminSecretName);
+    // const secret = new DatabaseSecret(this, props.dbAdminSecretName, {
+    //   secretName: props.dbAdminSecretName,
+    //   username: props.dbAdminName
+    // });
+    // Tags.of(secret).add('Name', props.dbAdminSecretName);
+    const secret = this.createSecret({ secretName: props.dbAdminSecretName, rdsName: props.dbAdminName });
 
     const cluster = new DatabaseCluster(this, 'clusterForAurora', {
       // LTSのバージョンを選択.RDSProxyは10と11のみのサポート 2021.12.10
-      engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_9 }),
+      engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_13 }),
       removalPolicy: RemovalPolicy.DESTROY, // 本番運用だと消しちゃだめだと思う
       defaultDatabaseName: 'postgres',
       instanceProps: {
@@ -52,7 +55,7 @@ export class AuroraStack extends Stack {
       subnetGroup,
       // https://dev.classmethod.jp/articles/cdk-practice-21-rds-parameter-group/
       parameterGroup: new ParameterGroup(this, 'rds params', {
-        engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_9 }),
+        engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_13 }),
         description: 'Cluster Parameter Group for RDS',
         parameters: {
           log_rotation_age: '30' // デフォルト60分。
@@ -66,27 +69,63 @@ export class AuroraStack extends Stack {
     // cluster.addRotationSingleUser();
 
     // RDSでの作成ユーザをシークレットに登録
-    const secretForDBUser = new DatabaseSecret(this, props.dbReadOnlyUserSecretName, {
-      secretName: props.dbReadOnlyUserSecretName,
-      username: props.dbReadOnlyUserName
-    });
-    Tags.of(secret).add('Name', props.dbAdminSecretName);
+    const secretForDBUser = this.createSecret({ secretName: props.dbReadOnlyUserSecretName, rdsName: props.dbReadOnlyUserName });
 
-    const proxy = cluster.addProxy('Proxy', {
-      secrets: [cluster.secret!, secretForDBUser],
+    // const proxy = cluster.addProxy('Proxy', {
+    //   secrets: [cluster.secret!, secretForDBUser],
+    //   vpc,
+    //   securityGroups: [securityGroup],
+    //   requireTLS: true,
+    //   iamAuth: true
+    // });
+    const proxy = new DatabaseProxy(this, 'RDSProxy', {
+      proxyTarget: ProxyTarget.fromCluster(cluster),
+      secrets: [secret, secretForDBUser],
       vpc,
       securityGroups: [securityGroup],
       requireTLS: true,
       iamAuth: true
     });
-    Tags.of(proxy).add('Name', 'AuroraProxy');
+
+    Tags.of(proxy).add('Name', 'AuroraRDSProxy');
 
     const role = new Role(this, 'DBProxyRole', { assumedBy: new AccountPrincipal(this.account) });
     Tags.of(role).add('Name', 'AuroraProxyRole');
     proxy.grantConnect(role, props.dbAdminName);
     proxy.grantConnect(role, props.dbReadOnlyUserName);
 
+    // 読取専用エンドポイント
+    const readOnlyEndpoint = new CfnDBProxyEndpoint(this, 'readOnlyProxyEndpoint', {
+      dbProxyEndpointName: 'readOnlyProxyEndpoint',
+      dbProxyName: proxy.dbProxyName,
+      // https://fits.hatenablog.com/entry/2021/09/26/212139
+      vpcSubnetIds: StringParameter.valueFromLookup(this, props.ssmParamKeySubnetIds).split(','), // vpc.privateSubnets.map(subnet => subnet.subnetId)やvpc.selectSubnets({ subnetType: SubnetType.PRIVATE_ISOLATED }).subnetIds では0個になってしまう。 VpcSubnetIds: expected minimum item count: 2, found: 0
+      targetRole: 'READ_ONLY'
+    })
+    Tags.of(readOnlyEndpoint).add('Name', 'readOnlyProxyEndpoint');
+
     // 作成したリソース全てにタグをつける
     Aspects.of(this).add(new Tag('Stack', id));
+  }
+
+  private createSecret(props: { secretName: string, rdsName: string }) {
+    // バグってそう。 以下を使用すると「The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again」が発生
+    // const secret = new DatabaseSecret(this, props.dbReadOnlyUserSecretName, {
+    //   secretName: props.secretName,
+    //   username: props.rdsName
+    // });
+    // Tags.of(secret).add('Name', props.dbAdminSecretName);
+
+    const secret = new Secret(this, props.secretName, {
+      secretName: props.secretName,
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ username: props.rdsName }),
+        excludePunctuation: true, // '、/、"、@、スペースはpostgresのパスワードに利用できないので除外
+        includeSpace: false,
+        generateStringKey: 'password'
+      }
+    })
+    Tags.of(secret).add('Name', props.secretName);
+    return secret;
   }
 }

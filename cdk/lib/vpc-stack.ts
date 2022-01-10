@@ -2,11 +2,13 @@ import { Aspects, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Peer, Port, PrivateSubnet, PrivateSubnetProps, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { SubnetGroup } from 'aws-cdk-lib/aws-rds';
+import { StringListParameter } from 'aws-cdk-lib/aws-ssm';
 
 const DB_PORT = 5432;
 
 interface VpcStackProps extends StackProps {
   subnetGroupName: string
+  ssmParamKeySubnetIds: string
 }
 export class VpcStack extends Stack {
   constructor(scope: Construct, id: string, props: VpcStackProps) {
@@ -87,6 +89,15 @@ export class VpcStack extends Stack {
       subnetGroupName: props.subnetGroupName
     });
     Tags.of(subnetGroupForAurora).add('Name', 'SubnetGroupForAurora');
+
+    // 読取専用 RDSProxyのエンドポイントを作るためにSubnetIdのリストが必要
+    const subnetIds = subnets.map(subnet => subnet.subnetId);
+    const subnetIdsParameter = new StringListParameter(this, "ssm-subnet-ids", {
+      parameterName: props.ssmParamKeySubnetIds,
+      stringListValue: subnetIds,
+      description: 'private subnet ids for rds proxy readonly endpoint'
+    });
+    Tags.of(subnetIdsParameter).add('Name', 'ssm-subnet-ids');
 
     //------------------ 踏み台用の設定 ----------------------------------
     const securityGroupPublic = new SecurityGroup(this, 'SecurityGroupForPublicSubnets', {

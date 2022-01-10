@@ -129,9 +129,11 @@ const getClient = async () => {
       // RDS ProxyのIAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生することがある
       // 原因1: lambdaのPolicyStatement不足(rds-connect)
       // 原因2: lambdaのPolicyStatementに指定したユーザ名と接続しようとしているユーザ名が異なる
+      // 原因3: 
 
-      // This RDS proxy has no credentials for the role user1. Check the credentials for this role and try again
+      // This RDS proxy has no credentials for the role ユーザ名. Check the credentials for this role and try again
       // 原因: ＣＤＫの、new DatabaseProxy(this, 'Proxy', { secrets: [],...)のsecretsの配列に使用したいユーザ・パスワードが入っていない。
+
       // permission denied for table electric
       // 原因: 使用しているユーザに該当するテーブルへの操作権限がない（insertなど）
 

@@ -10,7 +10,7 @@ const env = {
   region: process.env.CDK_DEFAULT_REGION
 }
 
-const envNames = ['VPC_ID', 'PRIVATE_SG_ID', 'SUBNET_GROUP_NAME', 'DB_SECRET_NAME', 'DB_ADMIN_NAME', 'DB_USER_SECRET_NAME', 'DB_USER_NAME'] as const
+const envNames = ['VPC_ID', 'PRIVATE_SG_ID', 'SUBNET_GROUP_NAME', 'DB_SECRET_NAME', 'DB_ADMIN_NAME', 'DB_USER_SECRET_NAME', 'DB_USER_NAME', 'SSM_PARAM_KEY_SUBNET_IDS'] as const
 const checkEnvs = (e: any): e is Record<(typeof envNames)[number], string> => {
   for (const a of envNames) {
     if (!e[a]) throw new Error(`please set environment variable ${a}`)
@@ -29,5 +29,6 @@ new AuroraStack(app, 'AuroraStack', {
   dbAdminSecretName: process.env.DB_SECRET_NAME,
   dbAdminName: process.env.DB_ADMIN_NAME,
   dbReadOnlyUserSecretName: process.env.DB_USER_SECRET_NAME,
-  dbReadOnlyUserName: process.env.DB_USER_NAME
+  dbReadOnlyUserName: process.env.DB_USER_NAME,
+  ssmParamKeySubnetIds: process.env.SSM_PARAM_KEY_SUBNET_IDS
 });
