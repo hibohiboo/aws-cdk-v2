@@ -108,7 +108,9 @@ const getPool = () => {
     password: () => signer.getAuthToken(signerOptions),
     ssl: {
       // https://www.amazontrust.com/repository/AmazonRootCA1.pem
-      ca: fs.readFileSync('/opt/nodejs/data/AmazonRootCA1.pem')
+      ca: fs.readFileSync('/opt/nodejs/data/AmazonRootCA1.pem'),
+      requestCert: true,
+      rejectUnauthorized: false
     }
   });
 }
@@ -126,10 +128,13 @@ const getClient = async () => {
       await postgres.init();
       return postgres;
     } catch (e) {
+      // タイムアウト
+      // セキュリティグループのインバウンドルールが設定されていない。RDS Proxyとプロキシエンドポイントはそれぞれセキュリティグループの設定があるので注意
+
       // RDS ProxyのIAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生することがある
       // 原因1: lambdaのPolicyStatement不足(rds-connect)
       // 原因2: lambdaのPolicyStatementに指定したユーザ名と接続しようとしているユーザ名が異なる
-      // 原因3: 
+      // 原因3: lambdaのPolicyStatementの文字列が間違っている。(arn:aws:rds-db:ap-northeast-1:)のところを(arn:aws:rds:ap-northeast-1:)としているなど
 
       // This RDS proxy has no credentials for the role ユーザ名. Check the credentials for this role and try again
       // 原因: ＣＤＫの、new DatabaseProxy(this, 'Proxy', { secrets: [],...)のsecretsの配列に使用したいユーザ・パスワードが入っていない。
@@ -139,6 +144,12 @@ const getClient = async () => {
 
       // The password that was provided for the role ロール名 is wrong
       // 原因: IAM認証を使用していないのにgetAuthTokenを使って接続しようとしている。IAM認証を使わない場合は、passwordにはパスワードの文字列が必要
+
+      // [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: Host: readOnlyProxyEndpoint.endpoint.proxy-xxx.ap-northeast-1.rds.amazonaws.com. is not in the cert's altnames: DNS:*.proxy-xxx.ap-northeast-1.rds.amazonaws.com
+      // 原因: 読取専用エンドポイント
+
+      // cannot execute INSERT in a read-only transaction
+      // 原因: 読取専用エンドポイントでinsert
 
       console.warn(`error try ${i}`, e);
       // pool = null; // テスト用。 getPool()で失敗する接続文字列でもインスタンスは返却される。

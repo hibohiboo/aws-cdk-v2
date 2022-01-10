@@ -100,7 +100,8 @@ export class AuroraStack extends Stack {
       dbProxyName: proxy.dbProxyName,
       // https://fits.hatenablog.com/entry/2021/09/26/212139
       vpcSubnetIds: StringParameter.valueFromLookup(this, props.ssmParamKeySubnetIds).split(','), // vpc.privateSubnets.map(subnet => subnet.subnetId)やvpc.selectSubnets({ subnetType: SubnetType.PRIVATE_ISOLATED }).subnetIds では0個になってしまう。 VpcSubnetIds: expected minimum item count: 2, found: 0
-      targetRole: 'READ_ONLY'
+      targetRole: 'READ_ONLY',
+      vpcSecurityGroupIds: [props.sgId]
     })
     Tags.of(readOnlyEndpoint).add('Name', 'readOnlyProxyEndpoint');
 
