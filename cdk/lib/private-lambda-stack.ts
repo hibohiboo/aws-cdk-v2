@@ -150,7 +150,7 @@ export class PrivateLambdaStack extends Stack {
       runtime: lambda.Runtime.NODEJS_14_X,
       entry: props.entry,
       functionName: props.name,
-      description: props.descritption,
+      description: process.env.AWS_SAM_LOCAL_FLAG === 'true' ? undefined : props.descritption, // sam-beta-cdk で UnicodeDecodeError: 'cp932' codec can't decode byte 0x83 in position 20453: illegal multibyte sequence のエラーが発生
       layers: props.layers,
       vpc: props.vpc,
       vpcSubnets: props.vpcSubnets,
