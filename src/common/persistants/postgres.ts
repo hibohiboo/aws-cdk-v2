@@ -4,7 +4,7 @@ import * as fs from 'fs'
 import type { PoolClient } from 'pg';
 
 const RETRY_COUNT = 5;
-const RETRY_INTERVAL_MILLI_SECOND = 1000; // 1秒
+const RETRY_INTERVAL_MILLI_SECOND = 100; // 0.1秒
 const signer = new RDS.Signer()
 let pool: Pool | null = null;
 /**
@@ -19,7 +19,30 @@ class Postgres {
    */
   async init() {
     if (!pool) throw new Error('pool is undefined')
-    this.#client = await pool.connect();
+
+    for (let i = 0; i < RETRY_COUNT; i++) {
+      try {
+        this.#client = await pool.connect();
+        return;
+      } catch (e) {
+        // RDS ProxyのIAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生することがある
+        // 原因1: lambdaのPolicyStatement不足(rds-connect)
+        // 原因2: lambdaのPolicyStatementに指定したユーザ名と接続しようとしているユーザ名が異なる
+
+        // This RDS proxy has no credentials for the role user1. Check the credentials for this role and try again
+        // 原因: ＣＤＫの、new DatabaseProxy(this, 'Proxy', { secrets: [],...)のsecretsの配列に使用したいユーザ・パスワードが入っていない。
+        // permission denied for table electric
+        // 原因: 使用しているユーザに該当するテーブルへの操作権限がない（insertなど）
+
+        // The password that was provided for the role ロール名 is wrong
+        // 原因: IAM認証を使用していないのにgetAuthTokenを使って接続しようとしている。IAM認証を使わない場合は、passwordにはパスワードの文字列が必要
+
+        console.warn(`error try ${i}`, e);
+        // pool = null; // テスト用。 getPool()で失敗する接続文字列でもインスタンスは返却される。
+        await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
+      }
+    }
+    throw new Error('connect failed')
   }
 
   /**
@@ -28,7 +51,7 @@ class Postgres {
    * @param params
    * @return {Promise<*>}
    */
-  async execute(query: string, params = []) {
+  async execute(query: string, params: any[] = []) {
     return (await this.#client.query(query, params)).rows;
   }
 
@@ -120,30 +143,53 @@ const getPool = () => {
 const getClient = async () => {
   if (!pool) pool = getPool();
   const postgres = new Postgres();
+  await postgres.init();
+  return postgres;
+};
 
+/**
+ * 一度しか実行せず、トランザクションが不要な場合のベストプラクティス。
+ * クライアントのリリース忘れを防ぐ
+ * 参考: https://node-postgres.com/features/pooling
+ * 
+ * @param query 
+ * @param params 
+ * @returns 
+ */
+export const executeSingleQuery = async (query: string, params: any[] = []) => {
+  if (!pool) pool = getPool();
   for (let i = 0; i < RETRY_COUNT; i++) {
     try {
-      await postgres.init();
-      return postgres;
+      const ret = await pool.query(query, params);
+      return ret.rows;
     } catch (e) {
-      // RDS ProxyのIAM認証がtrueになっていると、The IAM authentication failed for the role ロール名. Check the IAM token for this role and try again.のエラーが発生することがある
-      // 原因1: lambdaのPolicyStatement不足(rds-connect)
-      // 原因2: lambdaのPolicyStatementに指定したユーザ名と接続しようとしているユーザ名が異なる
-
-      // This RDS proxy has no credentials for the role user1. Check the credentials for this role and try again
-      // 原因: ＣＤＫの、new DatabaseProxy(this, 'Proxy', { secrets: [],...)のsecretsの配列に使用したいユーザ・パスワードが入っていない。
-      // permission denied for table electric
-      // 原因: 使用しているユーザに該当するテーブルへの操作権限がない（insertなど）
-
-      // The password that was provided for the role ロール名 is wrong
-      // 原因: IAM認証を使用していないのにgetAuthTokenを使って接続しようとしている。IAM認証を使わない場合は、passwordにはパスワードの文字列が必要
-
       console.warn(`error try ${i}`, e);
-      // pool = null; // テスト用。 getPool()で失敗する接続文字列でもインスタンスは返却される。
-      await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND)); // 1秒待つ
+      await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL_MILLI_SECOND));
     }
   }
   throw new Error('connect failed')
-};
+}
 
-export const getPostgresClient = getClient;
+/**
+ * トランザクションを実行する。
+ * @param executeQuery 実行クエリを含んだ関数。引数にトランザクションを開始したPostgresクライアントが渡される。
+ */
+export const executeTransaction = async (executeQuery: (client: Postgres) => Promise<void>) => {
+  const client = await getClient();
+
+  try {
+    await client.begin();
+    await executeQuery(client);
+    await client.commit();
+  } catch (e: any) {
+    console.warn('transaction rollback. error ->', e);
+    await client.rollback();
+    throw e;
+  } finally {
+    // lambdaのライフサイクルより、コードのバックグラウンド処理はlambda終了までに終わらせる必要がある。
+    // https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/runtimes-context.html
+    // node-postgres でも [クライアントで実行したクエリにエラーがあったかどうかに関係なく、チェックアウトに成功した場合は、常にクライアントをプールに戻す必要があります。]といっている。
+    // https://node-postgres.com/features/pooling
+    await client.release();
+  }
+}
