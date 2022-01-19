@@ -174,13 +174,14 @@ export const executeSingleQuery = async (query: string, params: any[] = []) => {
  * トランザクションを実行する。
  * @param executeQuery 実行クエリを含んだ関数。引数にトランザクションを開始したPostgresクライアントが渡される。
  */
-export const executeTransaction = async (executeQuery: (client: Postgres) => Promise<void>) => {
+export const executeTransaction = async (executeQuery: (client: Postgres) => Promise<any>) => {
   const client = await getClient();
 
   try {
     await client.begin();
-    await executeQuery(client);
+    const ret = await executeQuery(client);
     await client.commit();
+    return ret
   } catch (e: any) {
     console.warn('transaction rollback. error ->', e);
     await client.rollback();

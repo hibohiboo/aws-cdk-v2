@@ -10,10 +10,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     };
   }
 
-  let result = null;
-  await executeTransaction(async (client) => {
+  const result = await executeTransaction(async (client) => {
     const count = (await client.execute('select count(*) cnt from electric'))[0].cnt;
-    result = await client.execute(`insert into electric(id,name,measuredtime,value) values($1,$2,now(),1111) RETURNING *`, [count, event.queryStringParameters!.name]);
+    const ret = await client.execute(`insert into electric(id,name,measuredtime,value) values($1,$2,now(),1111) RETURNING *`, [count, event.queryStringParameters!.name]);
+    if (event.queryStringParameters!.name === 'rollback') throw Error('rollback test')
+    return ret
   })
 
   return {
