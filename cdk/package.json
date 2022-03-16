@@ -19,7 +19,8 @@
     "aurora-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/aurora.ts\" deploy AuroraStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "bastion-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/bastion.ts\" deploy BastionStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "prelambda-deploy": "npm run createLayer && npm run copyData",
-    "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
+    "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
+    "lambda-with-cognito-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambdaWithCognito.ts\" deploy LambdaWithCognitoStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",
@@ -33,8 +34,11 @@
     "typescript": "~4.6.2"
   },
   "dependencies": {
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.16.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-authorizers-alpha": "^2.16.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.16.0-alpha.0",
     "aws-cdk-lib": "2.16.0",
-    "constructs": "^10.0.85",
+    "constructs": "^10.0.89",
     "dotenv": "^16.0.0",
     "eslint": "^8.11.0",
     "source-map-support": "^0.5.21"
