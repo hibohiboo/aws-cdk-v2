@@ -1,0 +1,17 @@
+{
+  "Id": "q1",
+  "MetricStat": {
+    "Metric": {
+      "Namespace": "AWS/Lambda",
+      "MetricName": "Duration",
+      "Dimensions": [
+        {
+          "Name": "TestKey",
+          "Value": "TestValue"
+        }
+      ]
+    },
+    "Period": 3600,
+    "Stat": "Average"
+  }
+}
