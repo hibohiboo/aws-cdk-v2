@@ -10,7 +10,7 @@ bin_dir=$(cd $(dirname $0) && pwd)
 
 # メトリクスの取得
 tmp_result=`aws cloudwatch get-metric-data \
---metric-data-queries $(cat query.json | jq -c) \
+--metric-data-queries $(cat $bin_dir/query.json | jq -c) \
 --start-time 2022-03-12T04:00:00Z \
 --end-time 2022-03-12T10:00:00Z 
 `
