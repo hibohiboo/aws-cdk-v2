@@ -1,36 +1,17 @@
-[
-  {
-    "Id": "q1",
-    "MetricStat": {
-      "Metric": {
-        "Namespace": "AWS/Lambda",
-        "MetricName": "Duration",
-        "Dimensions": [
-          {
-            "Name": "FunctionName",
-            "Value": "aws-cartagraph-editor-sta-wwwcartagrapheditoreisei-CR6KcA0JMLTt"
-          }
-        ]
-      },
-      "Period": 60,
-      "Stat": "p90"
-    }
-  },
-  {
-    "Id": "q2",
-    "MetricStat": {
-      "Metric": {
-        "Namespace": "AWS/Lambda",
-        "MetricName": "Duration",
-        "Dimensions": [
-          {
-            "Name": "FunctionName",
-            "Value": "aws-cartagraph-editor-sta-CustomCDKBucketDeploymen-JpcZ9ff0LyQL"
-          }
-        ]
-      },
-      "Period": 60,
-      "Stat": "p90"
-    }
+{
+  "Id": "q_{{FunctionId}}",
+  "MetricStat": {
+    "Metric": {
+      "Namespace": "AWS/Lambda",
+      "MetricName": "Duration",
+      "Dimensions": [
+        {
+          "Name": "FunctionName",
+          "Value": "{{FunctionName}}"
+        }
+      ]
+    },
+    "Period": 3600,
+    "Stat": "p90"
   }
-]
+}
