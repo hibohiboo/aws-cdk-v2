@@ -22,7 +22,8 @@
     "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "lambda-with-cognito-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambdaWithCognito.ts\" deploy LambdaWithCognitoStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "vpc-test-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc-route-test.ts\" destroy VpcRouteTestStack  --profile produser",
-    "cloudfront-s3-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront.ts\" deploy AWSCloudFrontStack --profile produser"
+    "cloudfront-s3-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront.ts\" deploy AWSCloudFrontStack --profile produser",
+    "cloudfront-client-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront-client-deploy.ts\" deploy AWSCloudFrontClientDeployStack --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",

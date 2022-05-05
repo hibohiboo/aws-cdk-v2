@@ -30,6 +30,9 @@ export class AWSCloudFrontStack extends core.Stack {
       value: `https://${distribution.distributionDomainName}/`,
     })
 
+    new core.CfnOutput(this, `${props.distributionName}-distribution-id`, {
+      value: `${distribution.distributionId}`,
+    })
     core.Tags.of(this).add('Project', props.projectNameTag)
   }
 
