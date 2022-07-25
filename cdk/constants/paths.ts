@@ -1,0 +1,1 @@
+export const basePath = 'cdk-v2-sample'
