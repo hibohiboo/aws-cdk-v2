@@ -3,6 +3,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as cf from 'aws-cdk-lib/aws-cloudfront'
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment'
 import { Construct } from 'constructs'
+import { basePath } from '../constants/paths'
 
 interface Props extends core.StackProps {
   bucketName: string
@@ -10,6 +11,7 @@ interface Props extends core.StackProps {
   projectNameTag: string
   projectId: string
 }
+
 
 export class AWSCloudFrontClientDeployStack extends core.Stack {
   constructor(scope: Construct, id: string, props: Props) {
@@ -31,7 +33,7 @@ export class AWSCloudFrontClientDeployStack extends core.Stack {
       },
     )
     // 指定したディレクトリをデプロイ
-    this.deployS3(bucket, distribution, '../client/public', props.bucketName)
+    this.deployS3(bucket, distribution, '../client/build', props.bucketName)
 
     core.Tags.of(this).add('Project', props.projectNameTag)
   }
@@ -51,7 +53,7 @@ export class AWSCloudFrontClientDeployStack extends core.Stack {
         destinationBucket: siteBucket,
         distribution,
         distributionPaths: [`/*`],
-        // destinationKeyPrefix: basePath,
+        destinationKeyPrefix: basePath,
       },
     )
   }

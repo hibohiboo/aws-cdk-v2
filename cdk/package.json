@@ -23,6 +23,7 @@
     "lambda-with-cognito-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambdaWithCognito.ts\" deploy LambdaWithCognitoStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "vpc-test-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/vpc-route-test.ts\" destroy VpcRouteTestStack  --profile produser",
     "cloudfront-s3-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront.ts\" deploy AWSCloudFrontStack --profile produser",
+    "precloudfront-client-deploy": "cd ../client/ && npm run build",
     "cloudfront-client-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront-client-deploy.ts\" deploy AWSCloudFrontClientDeployStack --profile produser"
   },
   "devDependencies": {
@@ -41,7 +42,7 @@
     "@aws-cdk/aws-apigatewayv2-authorizers-alpha": "^2.33.0-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.33.0-alpha.0",
     "aws-cdk-lib": "2.33.0",
-    "constructs": "^10.1.57",
+    "constructs": "^10.1.58",
     "dotenv": "^16.0.1",
     "eslint": "^8.20.0",
     "source-map-support": "^0.5.21"

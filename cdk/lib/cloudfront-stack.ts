@@ -4,6 +4,7 @@ import * as cf from 'aws-cdk-lib/aws-cloudfront'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
 import { Construct } from 'constructs'
+import { basePath } from '../constants/paths'
 
 interface Props extends core.StackProps {
   bucketName: string
@@ -27,7 +28,7 @@ export class AWSCloudFrontStack extends core.Stack {
 
     // 確認用にCloudFrontのURLに整形して出力
     new core.CfnOutput(this, `${props.distributionName}-top-url`, {
-      value: `https://${distribution.distributionDomainName}/`,
+      value: `https://${distribution.distributionDomainName}/${basePath}`,
     })
 
     new core.CfnOutput(this, `${props.distributionName}-distribution-id`, {
@@ -108,7 +109,7 @@ export class AWSCloudFrontStack extends core.Stack {
       function handler(event) {
         var request = event.request;
         if (!request.uri.includes('.')){
-          request.uri = '/index.html';
+          request.uri = '/${basePath}/index.html';
         } 
         return request;
       }
@@ -121,7 +122,6 @@ export class AWSCloudFrontStack extends core.Stack {
       // httpVersion: cf.HttpVersion.HTTP2,
       comment: 'CloudFrontデプロイテスト',
       defaultRootObject: '/index.html',
-
       priceClass: cf.PriceClass.PRICE_CLASS_200,
       defaultBehavior: {
         origin,

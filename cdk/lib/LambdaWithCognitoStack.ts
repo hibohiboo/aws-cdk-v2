@@ -21,6 +21,7 @@ export class LambdaWithCognitoStack extends Stack {
     const userPool = new cognito.UserPool(this, `${props.projectId}-userPool`, {
       selfSignUpEnabled: false,
       standardAttributes: {
+        // mutable falseにすると、サインイン方法はユーザープール作成時にのみ設定でき後から変更することが出来ない https://qiita.com/shinnoki/items/aa1424128b1cc9b05dac
         email: { required: true, mutable: true },
         phoneNumber: { required: false },
       },
@@ -45,6 +46,7 @@ export class LambdaWithCognitoStack extends Stack {
         logoutUrls: props.logoutUrls,
         flows: { authorizationCodeGrant: true },
       },
+
     })
     const authorizer = new authz.HttpUserPoolAuthorizer(
       `${props.projectId}-CognitoAuthorizer`,
@@ -60,7 +62,7 @@ export class LambdaWithCognitoStack extends Stack {
       `${props.projectId}-scenario-lambda`,
       {
         runtime: lambda.Runtime.NODEJS_14_X,
-        entry: '../src/handler/api/getScenario.ts',
+        entry: '../src/handler/api/hello.ts',
         functionName: 'scenario',
         description: 'シナリオ',
       },
