@@ -28,4 +28,8 @@ export default defineConfig({
     VITE_DEFINE_BASE_PATH: JSON.stringify(basePath),
   },
   base: `/${basePath}/`,
+  server: {
+    host: true, // 開発サーバ外部のネットワークにアクセス可能にする。（vite v2の動きを踏襲）
+    port: 3000,
+  },
 })
