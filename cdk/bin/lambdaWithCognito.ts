@@ -24,7 +24,7 @@ const env = {
 }
 const projectId = processEnv.PROJECT_ID
 
-new LambdaWithCognitoStack(app, `${projectId}-stack`, {
+new LambdaWithCognitoStack(app, `${projectId}-lambda-with-cognito-stack`, {
   projectId,
   domainPrefix: processEnv.DOMAIN_PREFIX,
   callbackUrls: processEnv.CALLBACK_URLS.split(','),

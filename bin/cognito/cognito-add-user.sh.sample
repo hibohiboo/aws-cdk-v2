@@ -1,0 +1,41 @@
+#!/bin/bash
+
+COGNITO_CLIENT_ID=hoge
+COGNITO_USER_NAME=test@example.com
+COGNITO_USER_PASSWORD=SamplePassw0rd!
+COGNITO_UER_MAIL_ADDRESS=test@example.com
+COGNITO_USER_POOL_ID=ap-northeast-1_xxxxxx
+
+# https://zenn.dev/longbridge/articles/56678cbb919d61
+# ステータスが FORCE_CHANGE_PASSWORD のユーザを作成
+# メッセージを送信しない
+aws cognito-idp admin-create-user  \
+--user-pool-id $COGNITO_USER_POOL_ID \
+--username  $COGNITO_USER_NAME \
+--message-action SUPPRESS \
+--user-attributes Name=email,Value=$COGNITO_UER_MAIL_ADDRESS
+
+# オプション --permanent を指定することで、パスワードは恒久的なパスワードとなりステータスが CONFIRMED となる
+aws cognito-idp admin-set-user-password \
+--user-pool-id $COGNITO_USER_POOL_ID \
+--username $COGNITO_USER_NAME \
+--password $COGNITO_USER_PASSWORD \
+--permanent 
+
+
+# # https://dev.classmethod.jp/articles/change-cognito-user-force_change_passwore-to-confirmed/
+# aws cognito-idp sign-up \
+# --client-id $COGNITO_CLIENT_ID \
+# --username $COGNITO_USER_NAME \
+# --password $COGNITO_USER_PASSWORD \
+# --user-attributes Name=email,Value=$COGNITO_UER_MAIL_ADDRESS
+
+
+# aws cognito-idp admin-confirm-sign-up \
+# --user-pool-id $COGNITO_USER_POOL_ID \
+# --username $COGNITO_USER_NAME
+
+# aws cognito-idp admin-update-user-attributes \
+# --user-pool-id $COGNITO_USER_POOL_ID \
+# --username $COGNITO_USER_NAME \
+# --user-attributes Name=email_verified,Value=true

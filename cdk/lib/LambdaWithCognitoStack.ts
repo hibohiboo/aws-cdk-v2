@@ -45,7 +45,12 @@ export class LambdaWithCognitoStack extends Stack {
         callbackUrls: props.callbackUrls,
         logoutUrls: props.logoutUrls,
         flows: { authorizationCodeGrant: true },
+
       },
+      // amazon-cognito-identity-jsではクライアントシークレットをサポートしないので false に設定
+      // https://github.com/aws-amplify/amplify-js/tree/main/packages/amazon-cognito-identity-js#configuration
+      generateSecret: false,
+
 
     })
     const authorizer = new authz.HttpUserPoolAuthorizer(
@@ -94,8 +99,13 @@ export class LambdaWithCognitoStack extends Stack {
 
     new CfnOutput(this, 'OutputApiUrl', { value: stage.url })
     new CfnOutput(this, 'OutputDomainPrefix', { value: props.domainPrefix })
+    new CfnOutput(this, 'OutputUserPoolId', {
+      value: userPool.userPoolId,
+    })
     new CfnOutput(this, 'OutputClientId', {
       value: userPoolClient.userPoolClientId,
     })
+
+
   }
 }
