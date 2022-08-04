@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
-    "skipLibCheck": true, // react native で declare が被るためスキップする
+    "skipLibCheck": true, // amplify と vite の咬み合わせが良くないため、スキップする
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,

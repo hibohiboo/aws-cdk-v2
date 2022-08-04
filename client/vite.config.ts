@@ -14,6 +14,7 @@ export default defineConfig({
           reactFamily: ['react-router-dom'],
           rtk: ['react-redux', '@reduxjs/toolkit'],
           others: ['lodash', 'web-vitals', 'date-fns'],
+          amplify: ['aws-amplify'],
         },
       },
     },
@@ -22,7 +23,15 @@ export default defineConfig({
   root: '.',
   resolve: {
     // viteのホットリロードのために、/で始める必要がある。
-    alias: [{ find: '@', replacement: '/src' }],
+    alias: [
+      { find: '@', replacement: '/src' },
+      // https://ui.docs.amplify.aws/react/getting-started/troubleshooting
+      // aws-amplify で、 Uncaught ReferenceError: global is not defined と言われてしまうこと対策
+      {
+        find: './runtimeConfig',
+        replacement: './runtimeConfig.browser',
+      },
+    ],
   },
   define: {
     VITE_DEFINE_BASE_PATH: JSON.stringify(basePath),

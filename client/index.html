@@ -50,5 +50,13 @@
       </div>
     </footer>
     <script type="module" src="/src/index.tsx"></script>
+    <script>
+      // https://ui.docs.amplify.aws/react/getting-started/troubleshooting
+      window.global = window
+      window.process = {
+        env: { DEBUG: undefined },
+      }
+      var exports = {}
+    </script>
   </body>
 </html>
