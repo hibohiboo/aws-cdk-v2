@@ -1,21 +1,23 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/authHook'
+import { useAppDispatch } from '@/store/hooks'
+import { signIn } from '@/store/slices/auth'
 
 const Login: React.FC = () => {
-  const auth = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const dispatch = useAppDispatch()
 
   const executeSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const result = await auth.signIn(username, password)
-    if (result.success) {
-      navigate({ pathname: '/admin/top' })
-    } else {
-      alert(result.message)
+    const result = await dispatch(signIn({ username, password }))
+
+    if (result.meta.requestStatus !== 'fulfilled') {
+      alert('認証に失敗しました。')
+      return
     }
+    navigate({ pathname: '/admin/top' })
   }
 
   return (

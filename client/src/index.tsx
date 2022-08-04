@@ -4,7 +4,6 @@ import { BrowserRouter as Router } from 'react-router-dom'
 import { Amplify } from 'aws-amplify'
 import * as ReactDOMClient from 'react-dom/client'
 import { awsAuthConfigure } from './domain/auth/aws-config'
-import { ProvideAuth } from './hooks/authHook'
 import App from '@/router/RoutesApp'
 import { store } from '@/store'
 
@@ -18,12 +17,10 @@ Amplify.configure({ Auth: awsAuthConfigure })
 const root = ReactDOMClient.createRoot(container)
 root.render(
   <Router basename={VITE_DEFINE_BASE_PATH}>
-    <ProvideAuth>
-      <Provider store={store}>
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
-      </Provider>
-    </ProvideAuth>
+    <Provider store={store}>
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    </Provider>
   </Router>,
 )

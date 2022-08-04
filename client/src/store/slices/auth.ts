@@ -3,44 +3,48 @@ import {
   createSlice,
   SerializedError,
 } from '@reduxjs/toolkit'
+import { Auth } from 'aws-amplify'
 
-const signInAnonymously = () => ({ user: { uid: 'test' } })
 interface AuthState {
-  uid?: string
-  authenticated?: boolean
+  username?: string
+  authenticated: boolean
   error?: SerializedError
 }
 
 const initialState: AuthState = {
-  uid: undefined,
-  authenticated: undefined,
+  username: undefined,
+  authenticated: false,
   error: undefined,
 }
 
-interface PayLoad {
-  uid?: string
-}
 
-export const login = createAsyncThunk<AuthState, PayLoad>(
-  'login',
+export const initUser = createAsyncThunk<AuthState>(
+  'initUser',
   async (req, thunkAPI) => {
     try {
-      if (req.uid == null) {
-        const response = await signInAnonymously()
-        const uid = response.user?.uid
-        return { uid }
-      }
-      const uid = req.uid
-      return { uid }
+      const result = await Auth.currentAuthenticatedUser()
+      return { username: result.username, authenticated: true }
     } catch (error: any) {
       return thunkAPI.rejectWithValue({ error: error.message })
     }
   },
 )
 
-export const logout = createAsyncThunk('logout', async (_, thunkAPI) => {
+export const signIn = createAsyncThunk<AuthState, { username: string, password: string }>(
+  'signIn',
+  async ({ username, password }, thunkAPI) => {
+    try {
+      const result = await Auth.signIn(username, password)
+      return { username: result.username, authenticated: true }
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue({ error: error.message })
+    }
+  },
+)
+
+export const signOut = createAsyncThunk('logout', async (_, thunkAPI) => {
   try {
-    // await auth.signOut()
+    await Auth.signOut()
   } catch (error: any) {
     return thunkAPI.rejectWithValue({ error: error.message })
   }
@@ -51,19 +55,27 @@ export const authSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(login.fulfilled, (state, action) => {
-      state.uid = action.payload.uid
+    builder.addCase(signIn.fulfilled, (state, action) => {
+      state.username = action.payload.username
       state.authenticated = true
     })
-    builder.addCase(login.rejected, (state, action) => {
+    builder.addCase(signIn.rejected, (state, action) => {
       state.error = action.error
-    })
-    builder.addCase(logout.fulfilled, (state) => {
       state.authenticated = false
-      state.uid = initialState.uid
+      state.username = initialState.username
     })
-    builder.addCase(logout.rejected, (state, action) => {
+    builder.addCase(signOut.fulfilled, (state) => {
+      state.authenticated = false
+      state.username = initialState.username
+    })
+    builder.addCase(signOut.rejected, (state, action) => {
       state.error = action.error
+      state.authenticated = false
+      state.username = initialState.username
     })
-  },
+    builder.addCase(initUser.fulfilled, (state, action) => {
+      state.authenticated = true
+      state.username = action.payload.username
+    })
+  }
 })

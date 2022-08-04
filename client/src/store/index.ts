@@ -1,5 +1,5 @@
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'
-import { authSlice } from './slices/auth'
+import { authSlice, initUser } from './slices/auth'
 
 export const store = configureStore({
   reducer: {
@@ -16,3 +16,5 @@ export type AppThunk<ReturnType = void> = ThunkAction<
   unknown,
   Action<string>
 >
+
+store.dispatch(initUser())
