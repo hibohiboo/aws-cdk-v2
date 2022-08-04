@@ -3,10 +3,7 @@ import { Navigate, Outlet, RouteProps } from 'react-router-dom'
 import { useAppSelector } from '@/store/hooks'
 import { isUserAuthenticatedSelector } from '@/store/selectors/auth'
 
-export const PrivateRoute: React.FC<RouteProps> = ({
-  element: Component,
-  ...rest
-}) => {
+export const PrivateRoute: React.FC<RouteProps> = ({ element: _, ...rest }) => {
   const isAuthenticated = useAppSelector(isUserAuthenticatedSelector)
   if (!isAuthenticated) {
     return <Navigate to="/login" />
