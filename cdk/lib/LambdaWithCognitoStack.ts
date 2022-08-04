@@ -78,7 +78,11 @@ export class LambdaWithCognitoStack extends Stack {
       corsPreflight: {
         allowOrigins: props.frontendUrls,
         allowMethods: [apigw.CorsHttpMethod.ANY],
-        allowHeaders: ['authorization'],
+        allowHeaders: ['authorization', ' Content-Type', 'X-Api-Key',],
+        // https://docs.aws.amazon.com/cdk/api/v1/docs/@aws-cdk_aws-apigateway.CorsOptions.html
+        // authorization headersにはcrredentialsの許可が必要。
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
+        allowCredentials: true
       },
     })
 
@@ -90,6 +94,7 @@ export class LambdaWithCognitoStack extends Stack {
         handler,
       ),
       authorizer,
+
     })
     const stage = new apigw.HttpStage(this, `${props.projectId}-apistage`, {
       httpApi,

@@ -1,16 +1,20 @@
-import { APIGatewayProxyHandler } from 'aws-lambda';
+import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { format } from 'date-fns';
 import { formatDate } from '@/common/index';
+import { corsHeaders } from '@/domain/http/const';
 
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const datetime = formatDate(new Date(event.requestContext.requestTimeEpoch));
+// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/services-apigateway.html
+export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   console.log(`test:event -> ${JSON.stringify(event)}`)
   console.log(`test:env -> ${JSON.stringify(process.env)}`)
+  console.log(`test.context ->`, JSON.stringify(event.requestContext))
+  const datetime = formatDate(new Date(event.requestContext.timeEpoch));
 
   return {
     'statusCode': 200,
+    headers: corsHeaders,
     'body': JSON.stringify({
-      message: `hello world. ${datetime} = ${event.requestContext.requestTimeEpoch}. now: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss.SSS')}`,
+      message: `hello world. ${datetime} = ${event.requestContext.timeEpoch}. now: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss.SSS')}`,
     })
   };
 };
