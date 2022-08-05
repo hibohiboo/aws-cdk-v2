@@ -4,7 +4,7 @@ import * as apigw from '@aws-cdk/aws-apigatewayv2-alpha'
 import * as intg from '@aws-cdk/aws-apigatewayv2-integrations-alpha'
 import * as authz from '@aws-cdk/aws-apigatewayv2-authorizers-alpha'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib'
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 
 interface Props extends StackProps {
@@ -50,6 +50,7 @@ export class LambdaWithCognitoStack extends Stack {
       // amazon-cognito-identity-jsではクライアントシークレットをサポートしないので false に設定
       // https://github.com/aws-amplify/amplify-js/tree/main/packages/amazon-cognito-identity-js#configuration
       generateSecret: false,
+      idTokenValidity: Duration.minutes(5)
 
 
     })

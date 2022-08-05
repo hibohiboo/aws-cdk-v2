@@ -19,6 +19,13 @@ const Top: React.FC = () => {
       <div>
         Hello World<div>{JSON.stringify(ret?.data?.message)}</div>
       </div>
+      <button
+        onClick={() => {
+          ret.refetch()
+        }}
+      >
+        再取得
+      </button>
 
       <button onClick={executeSignOut}>ログアウト</button>
     </div>

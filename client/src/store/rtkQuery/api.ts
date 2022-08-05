@@ -6,8 +6,8 @@ export const authencicatedApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_APP_API_DOMAIN,
     prepareHeaders: async (headers, _) => {
-      const user = await Auth.currentUserPoolUser()
-      const token = user.getSignInUserSession()?.getIdToken().getJwtToken()
+      const session = await Auth.currentSession()
+      const token = session?.getIdToken().getJwtToken()
       headers.set('authorization', token)
       return headers
     },
