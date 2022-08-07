@@ -16,6 +16,8 @@ interface Props extends StackProps {
   callbackUrls: string[]
   logoutUrls: string[]
   ssmKeyForLambdaLayerArn: string
+  ssmKeyForUtilLambdaLayerArn: string
+  ssmKeyForVerifyLambdaLayerArn: string
 }
 export class LambdaWithCognitoStack extends Stack {
   constructor(scope: Construct, id: string, props: Props) {
@@ -62,11 +64,11 @@ export class LambdaWithCognitoStack extends Stack {
         userPoolClients: [userPoolClient],
       },
     )
-    const lambdaLayerArn = ssm.StringParameter.valueForStringParameter(this, props.ssmKeyForLambdaLayerArn);
+    const utilLambdaLayerArn = ssm.StringParameter.valueForStringParameter(this, props.ssmKeyForUtilLambdaLayerArn);
     const baseFunctionProps = {
       runtime: lambda.Runtime.NODEJS_14_X,
       layers: [
-        lambda.LayerVersion.fromLayerVersionArn(this, 'node_modules-layer', lambdaLayerArn)
+        lambda.LayerVersion.fromLayerVersionArn(this, 'node_modules-layer', utilLambdaLayerArn)
       ],
       bundling: {
         externalModules
@@ -134,12 +136,20 @@ export class LambdaWithCognitoStack extends Stack {
       value: userPoolClient.userPoolClientId,
     })
 
+    const verifyLambdaLayerArn = ssm.StringParameter.valueForStringParameter(this, props.ssmKeyForVerifyLambdaLayerArn);
+    const verifyLayers =
+      [
+        lambda.LayerVersion.fromLayerVersionArn(this, 'util-node_modules-layer', utilLambdaLayerArn),
+        lambda.LayerVersion.fromLayerVersionArn(this, 'verify-node_modules-layer', verifyLambdaLayerArn)
+
+      ]
     // cognitoグループを使った認可
     const verifyGroup1LambdaAuthHandler = new NodejsFunction(
       this,
       `verify-group-1-lambda`,
       {
         ...baseFunctionProps,
+        layers: verifyLayers,
         entry: '../src/handler/authorizer/apiGatewayV2SimpleAuthorizer.ts',
         functionName: 'apiGatewayV2SimpleAuthorizer',
         description: 'Cognitoのグループをみた認可',
@@ -185,6 +195,7 @@ export class LambdaWithCognitoStack extends Stack {
       `verify-group-2-lambda`,
       {
         ...baseFunctionProps,
+        layers: verifyLayers,
         entry: '../src/handler/authorizer/apiGatewayV2SimpleAuthorizer.ts',
         functionName: 'apiGatewayV2SimpleAuthorizerGroup2',
         description: 'Cognitoのグループをみた認可: グループ2',

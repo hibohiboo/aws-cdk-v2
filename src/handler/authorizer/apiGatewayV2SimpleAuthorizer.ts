@@ -1,5 +1,6 @@
 import { APIGatewayRequestSimpleAuthorizerHandlerV2WithContext } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
+import { format } from 'date-fns';
 
 const envList = [
   'COGNITO_UER_POOL_ID',
@@ -34,6 +35,7 @@ export const handler: APIGatewayRequestSimpleAuthorizerHandlerV2WithContext<Auth
   if (!event.headers?.authorization) return ret;
   const jwt = event.headers.authorization;
   let payload = null
+  console.log('time', format(new Date(), 'yyyy-MM-dd HH:mm:ssSSS'))
   try {
     payload = await verifier.verify(jwt, { groups: processEnv.COGNITO_USER_GROUP }); // group_0をgroup_1で 上書きするサンプル
     console.log("Access allowed. JWT payload:");
