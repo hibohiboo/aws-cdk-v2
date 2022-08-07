@@ -3,9 +3,11 @@ import * as cognito from 'aws-cdk-lib/aws-cognito'
 import * as apigw from '@aws-cdk/aws-apigatewayv2-alpha'
 import * as intg from '@aws-cdk/aws-apigatewayv2-integrations-alpha'
 import * as authz from '@aws-cdk/aws-apigatewayv2-authorizers-alpha'
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
+import { externalModules } from '../constants/lambda-layer'
 
 interface Props extends StackProps {
   projectId: string
@@ -13,6 +15,7 @@ interface Props extends StackProps {
   frontendUrls: string[]
   callbackUrls: string[]
   logoutUrls: string[]
+  ssmKeyForLambdaLayerArn: string
 }
 export class LambdaWithCognitoStack extends Stack {
   constructor(scope: Construct, id: string, props: Props) {
@@ -59,12 +62,21 @@ export class LambdaWithCognitoStack extends Stack {
         userPoolClients: [userPoolClient],
       },
     )
-
+    const lambdaLayerArn = ssm.StringParameter.valueForStringParameter(this, props.ssmKeyForLambdaLayerArn);
+    const baseFunctionProps = {
+      runtime: lambda.Runtime.NODEJS_14_X,
+      layers: [
+        lambda.LayerVersion.fromLayerVersionArn(this, 'node_modules-layer', lambdaLayerArn)
+      ],
+      bundling: {
+        externalModules
+      }
+    }
     const handler = new NodejsFunction(
       this,
       `${props.projectId}-hello-lambda`,
       {
-        runtime: lambda.Runtime.NODEJS_14_X,
+        ...baseFunctionProps,
         entry: '../src/handler/api/hello.ts',
         functionName: 'hello',
         description: 'ハロー',
@@ -95,7 +107,7 @@ export class LambdaWithCognitoStack extends Stack {
       this,
       `${props.projectId}-hello-lambda-jwt`,
       {
-        runtime: lambda.Runtime.NODEJS_14_X,
+        ...baseFunctionProps,
         entry: '../src/handler/api/helloJwtLambda.ts',
         functionName: 'hello-jwt',
         description: 'ハロー with jwt',
@@ -127,7 +139,7 @@ export class LambdaWithCognitoStack extends Stack {
       this,
       `verify-group-1-lambda`,
       {
-        runtime: lambda.Runtime.NODEJS_14_X,
+        ...baseFunctionProps,
         entry: '../src/handler/authorizer/apiGatewayV2SimpleAuthorizer.ts',
         functionName: 'apiGatewayV2SimpleAuthorizer',
         description: 'Cognitoのグループをみた認可',
@@ -151,7 +163,7 @@ export class LambdaWithCognitoStack extends Stack {
       this,
       `${props.projectId}-hello-lambda-auth`,
       {
-        runtime: lambda.Runtime.NODEJS_14_X,
+        ...baseFunctionProps,
         entry: '../src/handler/api/helloLambdaAuthed.ts',
         functionName: 'hello-lambda',
         description: 'ハロー with lambda',
@@ -172,7 +184,7 @@ export class LambdaWithCognitoStack extends Stack {
       this,
       `verify-group-2-lambda`,
       {
-        runtime: lambda.Runtime.NODEJS_14_X,
+        ...baseFunctionProps,
         entry: '../src/handler/authorizer/apiGatewayV2SimpleAuthorizer.ts',
         functionName: 'apiGatewayV2SimpleAuthorizerGroup2',
         description: 'Cognitoのグループをみた認可: グループ2',

@@ -6,6 +6,7 @@ import { NODE_LAMBDA_LAYER_DIR } from './process/setup';
 import { ISecurityGroup, IVpc, SecurityGroup, SelectedSubnets, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { externalModules } from '../constants/lambda-layer';
 
 interface PrivateLambdaStackProps extends StackProps {
   vpcId: string
@@ -31,11 +32,7 @@ export class PrivateLambdaStack extends Stack {
       }
     );
     const bundling = {
-      externalModules: [
-        'aws-sdk', // Use the 'aws-sdk' available in the Lambda runtime
-        'date-fns', // Layrerに入れておきたいモジュール
-        'pg'
-      ],
+      externalModules
     }
     const lambdaParamsDefault = {
       layers: [nodeModulesLayer],
