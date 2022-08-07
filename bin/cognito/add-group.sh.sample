@@ -1,0 +1,10 @@
+#!/bin/bash
+
+groupName=${1:-'group0'}
+userName=${2:-'user@example.com'}
+COGNITO_USER_POOL_ID=ap-northeast-1_xxx
+
+aws cognito-idp admin-add-user-to-group \
+--group-name $groupName \
+--user-pool-id $COGNITO_USER_POOL_ID \
+--username $userName 
