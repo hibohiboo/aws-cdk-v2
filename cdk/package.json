@@ -27,7 +27,7 @@
     "precloudfront-client-deploy": "cd ../client/ && npm run build",
     "cloudfront-client-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/cloudfront-client-deploy.ts\" deploy AWSCloudFrontClientDeployStack --profile produser",
     "prelog-retention-deploy": "aws logs describe-log-groups --query \"logGroups[?contains(logGroupName,`/aws/lambda/hello`)].logGroupName\" > constants/log-groups.json",
-    "log-retention-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/log-retention.ts\" destroy LogS3FireHoseStack  --profile produser"
+    "log-retention-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/log-retention.ts\" deploy LogS3FireHoseStack CdkV2LogRetentionStack   --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",

@@ -11,8 +11,7 @@ export class CdkV2LogRetentionStack extends Stack {
       // https://stackoverflow.com/questions/67212678/list-all-loggroups-using-cdk
       const logRetention = new logs.LogRetention(this, `log-retention-${name}`, {
         logGroupName: name,
-        retention: logs.RetentionDays.TWO_MONTHS,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        retention: logs.RetentionDays.TWO_MONTHS
       });
     }))
 
