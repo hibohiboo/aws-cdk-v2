@@ -19,3 +19,6 @@ bundle-common
 cdk.context.json
 .env
 *-node_modules
+
+# log-group一覧
+constants/log-groups.json
