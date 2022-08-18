@@ -6,7 +6,7 @@
   "scripts": {
     "bundle": "esbuild --bundle src/common/index.ts --outfile=cdk/bundle-common/nodejs/index.js --target=node14 --format=cjs",
     "bundleData": "cp -r src/common/data cdk/bundle-node_modules/nodejs/data",
-    "set-log-retention": "aws logs describe-log-groups --query \"logGroups[?contains(logGroupName,'/aws/lambda/hello-jwt')]\" | jq -r \".[].logGroupName\" | sed \"s/^ *\\| *$//\"  | xargs -IVAR_LOG_GROUP_NAME aws logs put-retention-policy --log-group-name VAR_LOG_GROUP_NAME --retention-in-days 30"
+    "set-log-retention": "aws logs describe-log-groups --log-group-name-prefix /aws/lambda/hello --query \"logGroups[?retentionInDays==null]\" | jq -r \".[].logGroupName\" | sed \"s/^ *\\| *$//\"  | xargs -IVAR_LOG_GROUP_NAME aws logs put-retention-policy --log-group-name VAR_LOG_GROUP_NAME --retention-in-days 60"
   },
   "repository": {
     "type": "git",
