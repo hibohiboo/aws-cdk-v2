@@ -43,7 +43,7 @@ export class LogS3FireHoseStack extends core.Stack {
       //   destination: new logsDestinations.KinesisDestination(sourceStream),
       //   filterPattern: logs.FilterPattern.allEvents()
       // })
-      new FixedSubscriptionFilter(this, 'Filter', {
+      new FixedSubscriptionFilter(this, `subscription-filter-${name}`, {
         logGroup,
         destination: new logsDestinations.KinesisDestination(sourceStream),
         filterPattern: logs.FilterPattern.allEvents(),
