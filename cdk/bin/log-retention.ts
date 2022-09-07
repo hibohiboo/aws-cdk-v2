@@ -18,6 +18,6 @@ const env = {
 
 const app = new cdk.App();
 new LogS3FireHoseStack(app, 'LogS3FireHoseStack', { env, bucketName: processEnv.LOG_BACKUP_BUCKET_NAME })
-new CdkV2LogRetentionStack(app, 'CdkV2LogRetentionStack', {
-  env
-});
+// new CdkV2LogRetentionStack(app, 'CdkV2LogRetentionStack', {
+//   env
+// });

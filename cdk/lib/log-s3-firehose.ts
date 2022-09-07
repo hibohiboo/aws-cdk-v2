@@ -8,7 +8,7 @@ import * as kinesis from 'aws-cdk-lib/aws-kinesis'
 import { aws_logs as logs } from 'aws-cdk-lib';
 import { Aspects, Tag } from 'aws-cdk-lib'
 import logGroups from '../constants/log-groups.json';
-
+import * as iam from 'aws-cdk-lib/aws-iam'
 interface Props extends core.StackProps {
   bucketName: string
 }
@@ -39,10 +39,15 @@ export class LogS3FireHoseStack extends core.Stack {
 
     logGroups.forEach(name => {
       const logGroup = logs.LogGroup.fromLogGroupName(this, `log-group-${name}`, name);
-      logGroup.addSubscriptionFilter(`subscription-filter-${name}`, {
+      // const filter = logGroup.addSubscriptionFilter(`subscription-filter-${name}`, {
+      //   destination: new logsDestinations.KinesisDestination(sourceStream),
+      //   filterPattern: logs.FilterPattern.allEvents()
+      // })
+      new FixedSubscriptionFilter(this, 'Filter', {
+        logGroup,
         destination: new logsDestinations.KinesisDestination(sourceStream),
-        filterPattern: logs.FilterPattern.allEvents()
-      })
+        filterPattern: logs.FilterPattern.allEvents(),
+      });
     })
     core.Tags.of(this).add('Project', 'log-s3')
 
@@ -50,4 +55,31 @@ export class LogS3FireHoseStack extends core.Stack {
     Aspects.of(this).add(new Tag('Stack', id));
   }
 
+}
+
+class FixedSubscriptionFilter extends core.Resource {
+  constructor(scope: Construct, id: string, props: logs.SubscriptionFilterProps) {
+    super(scope, id);
+
+    const destProps = props.destination.bind(this, props.logGroup);
+
+    const filter = new logs.CfnSubscriptionFilter(this, 'Resource', {
+      logGroupName: props.logGroup.logGroupName,
+      destinationArn: destProps.arn,
+      roleArn: destProps.role && destProps.role.roleArn,
+      filterPattern: props.filterPattern.logPatternString,
+    });
+
+    // Add dependency on policy
+    if (destProps.role) {
+      // Find policy attached to role
+      const policy = destProps.role.node.tryFindChild('DefaultPolicy');
+      if (policy) {
+        // filter should depend on policy
+        filter.node.addDependency(policy);
+      } else {
+        throw new Error('there is no policy');
+      }
+    }
+  }
 }
