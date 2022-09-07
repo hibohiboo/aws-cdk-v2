@@ -32,7 +32,7 @@ export class LogS3FireHoseStack extends core.Stack {
       sourceStream,
       destinations: [new kinesisDestinations.S3Bucket(bucket, {
         dataOutputPrefix: 'log-archive/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/!{timestamp:HHmmss}/!{firehose:random-string}',
-        errorOutputPrefix: 'log-archive-failures/!{firehose:error-output-type}/!{timestamp:yyyy}/anyMonth/!{timestamp:dd}',
+        errorOutputPrefix: 'log-archive-failures/!{firehose:error-output-type}/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/!{timestamp:yyyyMMddHHmmss}',
       })],
     });
     core.Tags.of(deliveryStream).add('Name', 'log-to-s3')
