@@ -3,8 +3,10 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as cf from 'aws-cdk-lib/aws-cloudfront'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
+import * as cognito from '@aws-cdk/aws-cognito-identitypool-alpha';
 import { Construct } from 'constructs'
 import { basePath } from '../constants/paths'
+import { aws_rum as rum } from 'aws-cdk-lib';
 
 interface Props extends core.StackProps {
   bucketName: string
@@ -33,6 +35,10 @@ export class AWSCloudFrontStack extends core.Stack {
 
     new core.CfnOutput(this, `${props.distributionName}-distribution-id`, {
       value: `${distribution.distributionId}`,
+    })
+    const rum = this.createRUM(distribution.distributionDomainName);
+    new core.CfnOutput(this, `${props.distributionName}-rum-name`, {
+      value: `${rum.name}`,
     })
     core.Tags.of(this).add('Project', props.projectNameTag)
   }
@@ -172,4 +178,96 @@ export class AWSCloudFrontStack extends core.Stack {
 
     return d
   }
+
+  private createRUM(domain: string) {
+    // RUMが自動生成するCognitoと同等のCognitoを生成
+    const { identityPool, role } = this.createIdentityPool();
+
+    // RUMの生成
+    const cfnAppMonitor = new rum.CfnAppMonitor(this, 'MyCfnAppMonitor', {
+      // 必須。ドメイン名
+      domain,
+      // 必須。Monitor の名前。
+      name: `rum-for-croudront-${domain}`,
+
+      // the properties below are optional
+
+      // この引数を省略すると、CloudWatch RUM に使用されるサンプル レートはユーザー セッションの 10% に設定される。
+      appMonitorConfiguration: {
+        // クッキー情報を取得するかどうか。trueにした場合、2つのCookieがRUMでモニタされる。セッションクッキー、ユーザクッキー
+        allowCookies: false,
+
+        // AWS X-Ray に情報を連携するかどうか
+        enableXRay: false,
+
+        // 除外するページURLのリスト
+        // excludedPages: ['excludedPages'],
+        // 含めるページURLのリスト。excludePagesと同時に指定はできない。
+        // includedPages: ['includedPages'],
+        // RUM 上で"favorite"アイコンを付けるURLのリスト
+        // favoritePages: ['favoritePages'],
+
+        // Amazon Cognito ID プール設定。(CloudWatch RUM へのデータの送信を承認するために使用)。
+        //     Cognito ID プールの ID。
+        identityPoolId: identityPool.identityPoolId,
+        //     アタッチされているゲスト IAM ロールの ARN。
+        guestRoleArn: role.roleArn,
+
+        // サンプルレート。デフォルトは0.1(10%)。1にするとセッションの100%をモニタする。高くするほどコストがかかるので注意。
+        // sessionSampleRate: 1,
+
+        // テレメトリ。 errors,performance,httpの中から選択。
+        //    perfromance ... ページならびにリソースのロード時間に関する情報を収集
+        //    errors .... アプリケーションによって発生した未処理の JavaScript エラーに関する情報を収集
+        //    http ...  アプリケーションによってスローされた HTTP エラーに関する情報を収集。
+        // これらのいずれかを選択しない場合でも、アプリケーションモニターはセッション開始イベントとページ ID を収集する。
+        // telemetries: ['http'],
+
+        // // メトリクス送信先
+        // metricDestinations: [{
+        //   destination: 'destination',
+
+        //   // the properties below are optional
+        //   destinationArn: 'destinationArn',
+        //   iamRoleArn: 'iamRoleArn',
+        //   metricDefinitions: [{
+        //     name: 'name',
+
+        //     // the properties below are optional
+        //     dimensionKeys: {
+        //       dimensionKeysKey: 'dimensionKeys',
+        //     },
+        //     eventPattern: 'eventPattern',
+        //     unitLabel: 'unitLabel',
+        //     valueKey: 'valueKey',
+        //   }],
+        // }],
+
+      },
+      // デフォルトでfalse。trueの場合、ログを30日以上保存するように、データのコピーがCloudWatch Logsに作成されるようになる。
+      // cwLogEnabled: false,
+
+      // タグの設定も可能。今回は省略する。
+      // tags: [{
+      //   key: 'key',
+      //   value: 'value',
+      // }],
+    });
+    return cfnAppMonitor
+  }
+
+
+
+  private createIdentityPool(): {
+    identityPool: cognito.IIdentityPool
+    role: iam.IRole,
+  } {
+    const identityPool = new cognito.IdentityPool(this, 'IdentityPool', {
+      // 匿名認証の有効化
+      allowUnauthenticatedIdentities: true,
+    });
+    return { identityPool, role: identityPool.unauthenticatedRole };
+  }
+
+
 }
