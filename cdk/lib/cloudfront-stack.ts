@@ -36,7 +36,7 @@ export class AWSCloudFrontStack extends core.Stack {
     new core.CfnOutput(this, `${props.distributionName}-distribution-id`, {
       value: `${distribution.distributionId}`,
     })
-    const rum = this.createRUM(distribution.distributionDomainName);
+    const rum = this.createRUM(distribution.distributionDomainName, props.env!.account!, props.env!.region!);
     new core.CfnOutput(this, `${props.distributionName}-rum-name`, {
       value: `${rum.name}`,
     })
@@ -179,7 +179,7 @@ export class AWSCloudFrontStack extends core.Stack {
     return d
   }
 
-  private createRUM(domain: string) {
+  private createRUM(domain: string, accountId: string, region: string) {
     // RUMが自動生成するCognitoと同等のCognitoを生成
     const { identityPool, role } = this.createIdentityPool();
 
@@ -214,7 +214,7 @@ export class AWSCloudFrontStack extends core.Stack {
         guestRoleArn: role.roleArn,
 
         // サンプルレート。デフォルトは0.1(10%)。1にするとセッションの100%をモニタする。高くするほどコストがかかるので注意。
-        // sessionSampleRate: 1,
+        sessionSampleRate: 1,
 
         // テレメトリ。 errors,performance,httpの中から選択。
         //    perfromance ... ページならびにリソースのロード時間に関する情報を収集
@@ -253,6 +253,13 @@ export class AWSCloudFrontStack extends core.Stack {
       //   value: 'value',
       // }],
     });
+
+    // CognitoIdのIAMロールにRUMへの送信権限を付与
+    role.addToPrincipalPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['rum:PutRumEvents'],
+      resources: [`arn:aws:rum:${region}:${accountId}:appmonitor/${cfnAppMonitor.name}`],
+    }));
     return cfnAppMonitor
   }
 
@@ -266,6 +273,7 @@ export class AWSCloudFrontStack extends core.Stack {
       // 匿名認証の有効化
       allowUnauthenticatedIdentities: true,
     });
+
     return { identityPool, role: identityPool.unauthenticatedRole };
   }
 
