@@ -1,7 +1,7 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import { terser } from 'rollup-plugin-terser'
 import { defineConfig } from 'vite'
 const basePath = 'aws-cdk-v2-sample'
+const dev = process.env.npm_lifecycle_event === 'dev';
 
 export default defineConfig({
   build: {
@@ -19,7 +19,10 @@ export default defineConfig({
       },
     },
   },
-  plugins: [reactRefresh(), terser({ compress: { drop_console: true } })],
+  esbuild: {
+    drop: dev ? [] : ['console'],
+  },
+  plugins: [reactRefresh(),],
   root: '.',
   resolve: {
     // viteのホットリロードのために、/で始める必要がある。
