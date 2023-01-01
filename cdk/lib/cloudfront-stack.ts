@@ -214,7 +214,7 @@ export class AWSCloudFrontStack extends core.Stack {
         guestRoleArn: role.roleArn,
 
         // サンプルレート。デフォルトは0.1(10%)。1にするとセッションの100%をモニタする。高くするほどコストがかかるので注意。
-        sessionSampleRate: 1,
+        sessionSampleRate: 0.1,
 
         // テレメトリ。 errors,performance,httpの中から選択。
         //    perfromance ... ページならびにリソースのロード時間に関する情報を収集
