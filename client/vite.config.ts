@@ -15,6 +15,7 @@ export default defineConfig({
           rtk: ['react-redux', '@reduxjs/toolkit'],
           others: ['lodash', 'web-vitals', 'date-fns'],
           amplify: ['aws-amplify'],
+          rum: ['aws-rum-web']
         },
       },
     },

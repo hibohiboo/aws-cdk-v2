@@ -1,5 +1,6 @@
 import React from 'react'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import { getRum } from '@/domain/rum/aws-rum'
 import Login from '@/components/Pages/Login'
 import Redirect from '@/components/Pages/Redirect'
 import Test from '@/components/Pages/Test'
@@ -9,6 +10,16 @@ import { PrivateRoute } from './context/PriveteRoute'
 import { PublicRoute } from './context/PublicRoute'
 
 const App: React.FC = () => {
+  const location = useLocation()
+
+  React.useEffect(() => {
+    if (import.meta.env.DEV) return
+    const cwr = getRum()
+    if (!cwr) return
+    console.log(location.pathname)
+    cwr.recordPageView(location.pathname)
+  }, [location])
+
   return (
     <Routes>
       <Route path="/admin" element={<AdminRoute />}>
