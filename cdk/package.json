@@ -19,7 +19,7 @@
     "aurora-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/aurora.ts\" deploy AuroraStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "bastion-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/bastion.ts\" deploy BastionStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "prelambda-deploy": "npm run createLayer && npm run copyData",
-    "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
+    "lambda-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambda.ts\" deploy PrivateLambdaStack --profile produser",
     "step-functions-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/step-functions.ts\" deploy StepFunctionSampleStack --profile produser",
     "create-layer-for-lambda-with-cognito-deploy": "ts-node lib/process/preForCognitoLambda.ts && cdk -a \"npx ts-node --prefer-ts-exts bin/lambda-layer-for-cognito-deploy.ts\" deploy  -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
     "lambda-with-cognito-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/lambdaWithCognito.ts\" deploy  -c @aws-cdk/core:newStyleStackSynthesis=true --profile produser",
