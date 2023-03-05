@@ -9,7 +9,7 @@ export class PythonDockerLambdaHelloStack extends Stack {
   constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
-    const dockerImage = lambda.DockerImageCode.fromImageAsset('../python-lambda-project', {
+    const dockerImage = lambda.DockerImageCode.fromImageAsset('../python-lambda-project/hello', {
       cmd: ['app.handler'], // Pythonファイルのエントリーポイントを指定
     });
 
