@@ -6,3 +6,4 @@ services:
       context: ./eccodes
     volumes:
       - ./grib2:/grib2
+      - ./src:/src
