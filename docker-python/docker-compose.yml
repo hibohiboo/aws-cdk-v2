@@ -1,0 +1,8 @@
+version: "3.5"
+
+services:
+  eccodes:
+    build:
+      context: ./eccodes
+    volumes:
+      - ./grib2:/grib2
