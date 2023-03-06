@@ -30,7 +30,8 @@
     "prelog-retention-deploy": "aws logs describe-log-groups --query \"logGroups[?contains(logGroupName,`/aws/lambda/hello`)].logGroupName\" > constants/log-groups.json",
     "log-retention-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/log-retention.ts\" deploy LogS3FireHoseStack   --profile produser",
     "postlog-retention-deploy": "aws logs describe-log-groups --log-group-name-prefix /aws/lambda/hello --query \"logGroups[?retentionInDays==null]\" | jq -r \".[].logGroupName\" | sed \"s/^ *\\| *$//\"  | xargs -IVAR_LOG_GROUP_NAME aws logs put-retention-policy --log-group-name VAR_LOG_GROUP_NAME --retention-in-days 60",
-    "docker-lambda-hello": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-hello.ts\" deploy PythonDockerLambdaHelloStack --profile produser"
+    "docker-lambda-hello": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-hello.ts\" deploy PythonDockerLambdaHelloStack --profile produser",
+    "docker-lambda-echo": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-echo.ts\" deploy PythonDockerLambdaEchoStack --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.1",
