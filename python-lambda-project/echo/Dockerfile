@@ -1,14 +1,20 @@
-FROM python:3
+# Define function directory
+ARG FUNCTION_DIR="/var/task"
 
-WORKDIR /var/task
+FROM python:3 as build-image
 
-# https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/images-create.html
-COPY app.py /var/task
+ARG FUNCTION_DIR
+RUN mkdir -p ${FUNCTION_DIR}
+RUN pip install \
+  --target ${FUNCTION_DIR} \
+  awslambdaric
+COPY app.py ${FUNCTION_DIR}
 
-# lambda実行用
-RUN pip install awslambdaric
+FROM python:3 
+ARG FUNCTION_DIR
+WORKDIR ${FUNCTION_DIR}
+
+COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
-
-# Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
 CMD [ "app.handler" ]
