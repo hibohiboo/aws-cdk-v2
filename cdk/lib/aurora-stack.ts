@@ -34,12 +34,13 @@ export class AuroraStack extends Stack {
     const subnetGroup = SubnetGroup.fromSubnetGroupName(this, 'SubnetGroup', props.subnetGroupName.toLowerCase());
 
     const secret = this.createSecret({ secretName: props.dbAdminSecretName, rdsName: props.dbAdminName });
-
+    const engine = DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_14_7 });
     const cluster = new DatabaseCluster(this, 'clusterForAurora', {
-      // LTSのバージョンを選択.RDSProxyは10と11のみのサポート 2021.12.10
-      engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_13 }),
+      // LTSのバージョンを選択.RDSProxyは14をサポート 2023.05.08
+      engine,
       removalPolicy: RemovalPolicy.DESTROY, // 本番運用だと消しちゃだめだと思う
       defaultDatabaseName: 'postgres',
+
       instanceProps: {
         vpc,
         securityGroups: [securityGroup],
@@ -50,10 +51,11 @@ export class AuroraStack extends Stack {
       subnetGroup,
       // https://dev.classmethod.jp/articles/cdk-practice-21-rds-parameter-group/
       parameterGroup: new ParameterGroup(this, 'rds params', {
-        engine: DatabaseClusterEngine.auroraPostgres({ version: AuroraPostgresEngineVersion.VER_11_13 }),
+        engine,
         description: 'Cluster Parameter Group for RDS',
         parameters: {
-          log_rotation_age: '30' // デフォルト60分。
+          log_rotation_age: '30', // デフォルト60分。
+          timezone: 'UTC' // 'Asia/Tokyo', // 'UTC'
         },
       }),
       credentials: Credentials.fromSecret(secret)
