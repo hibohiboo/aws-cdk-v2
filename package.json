@@ -19,15 +19,16 @@
   },
   "homepage": "https://github.com/hibohiboo/aws-cdk-v2#readme",
   "dependencies": {
+    "@aws-sdk/client-sns": "^3.357.0",
     "aws-jwt-verify": "^4.0.0",
-    "aws-sdk": "^2.1373.0",
+    "aws-sdk": "^2.1402.0",
     "date-fns": "^2.30.0",
-    "pg": "^8.10.0"
+    "pg": "^8.11.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.115",
-    "@types/pg": "^8.6.6",
-    "esbuild": "^0.17.18",
-    "typescript": "^5.0.4"
+    "@types/aws-lambda": "^8.10.119",
+    "@types/pg": "^8.10.2",
+    "esbuild": "^0.18.6",
+    "typescript": "^5.1.3"
   }
 }
