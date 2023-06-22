@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/hibohiboo/aws-cdk-v2#readme",
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.357.0",
     "@aws-sdk/client-sns": "^3.357.0",
     "aws-jwt-verify": "^4.0.0",
     "aws-sdk": "^2.1402.0",

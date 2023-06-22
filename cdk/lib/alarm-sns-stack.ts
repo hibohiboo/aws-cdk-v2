@@ -1,7 +1,8 @@
-import { Aspects, CfnOutput, Duration, Stack, StackProps, Tag } from "aws-cdk-lib";
+import { Aspects, CfnOutput, Duration, RemovalPolicy, Stack, StackProps, Tag } from "aws-cdk-lib";
 import { Alarm, AlarmProps, AlarmRule, AlarmState, ComparisonOperator, CompositeAlarm, Metric, MetricProps, TreatMissingData } from "aws-cdk-lib/aws-cloudwatch";
 import { Rule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Topic } from "aws-cdk-lib/aws-sns";
@@ -13,6 +14,10 @@ interface AlarmSNSStackProps extends StackProps { emailAdress: string }
 export class AlarmSNSStack extends Stack {
   constructor(scope: Construct, id: string, props: AlarmSNSStackProps) {
     super(scope, id, props);
+
+
+
+
     const topicName = 'topic'
     const snsTopic = new Topic(this, topicName, { displayName: topicName, topicName, fifo: false });
     snsTopic.addSubscription(new EmailSubscription(props.emailAdress));
@@ -46,12 +51,22 @@ export class AlarmSNSStack extends Stack {
     const alarmRules = ['test1', 'test2'].map(alarmName => {
       const metric = new Metric({ ...metricProps, dimensionsMap: { Target: alarmName } });
       const alarm = new Alarm(this, alarmName, { ...alarmProp, alarmName, metric });
+      alarm.applyRemovalPolicy(RemovalPolicy.DESTROY);
       return AlarmRule.fromAlarm(alarm, AlarmState.ALARM)
     });
     const compositeAlarmName = 'composite-alarm';
+
     const compositeAlarm = new CompositeAlarm(this, compositeAlarmName, { compositeAlarmName, alarmRule: AlarmRule.anyOf(...alarmRules) });
     const rule = new Rule(this, 'composit-rule', { eventPattern: { resources: [compositeAlarm.alarmArn], detail: { state: { value: ['ALARM', 'OK'] } } } });
     rule.addTarget(new LambdaFunction(mailSenderLambda))
+    compositeAlarm.applyRemovalPolicy(RemovalPolicy.DESTROY);
+
+    const describeLambda = new NodejsFunction(this, 'describeLambda', {
+      runtime: Runtime.NODEJS_18_X,
+      entry: `../src/handler/invoke/describeAlarm.ts`,
+      environment: { compositeAlarmName },
+      initialPolicy: [new PolicyStatement({ actions: ['cloudwatch:DescribeAlarms'], resources: ['*'] })]
+    });
 
     Aspects.of(this).add(new Tag('Stack', 'AlarmSNSStack'));
   }
