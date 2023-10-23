@@ -59,9 +59,7 @@
   // files.excludeはエクスプローラーからも検索からも除外され、完全にないものとして扱われる http://qiita.com/shimoju/items/f64a0a7f0baa9cfafd4b
   "search.exclude": {
     "**/node_modules": true,
-    "**/bower_components": true,
     "**/bundle": true,
-    "**/composer": true,
     "**/tmp": true,
     "**/.tmp": true
   },
