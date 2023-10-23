@@ -1,0 +1,68 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "editor.tabCompletion": "on",
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.format.enable": false,
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.useESLintClass": true,
+  "prettier.prettierPath": "./node_modules/prettier/index.cjs",
+  // デフォルトの設定はオフにしておく
+  "typescript.format.enable": false,
+  "javascript.format.enable": false,
+  // // フォントファミリー(お好みで)
+  // "editor.fontFamily": "'Source Han Code JP', Menlo, Monaco, 'Courier New', monospace",
+  // // フォントサイズ(お好みで)
+  // "editor.fontSize": 14,
+  // // 自動フォーマットする
+  // "editor.formatOnType": true,
+  // カーソルがにゅるっと点滅する
+  "editor.cursorBlinking": "smooth",
+  // ホワイトスペースを表示する。ただし単語間の単一スペースは表示しない
+  "editor.renderWhitespace": "boundary",
+  // 制御文字を表示する
+  "editor.renderControlCharacters": true,
+  // 現在行をガターを含めてハイライトするので視認性が上がる
+  "editor.renderLineHighlight": "all",
+  // // 差分を横に並べて表示ではなく行内に表示する
+  // "diffEditor.renderSideBySide": false,
+  // Quick Openで開いたファイルはプレビューにしない方が使いやすい
+  "workbench.editor.enablePreviewFromQuickOpen": false,
+  // 余分なホワイトスペースを削除 ... markdown書くときに困るのでコメントアウト
+  // "files.trimTrailingWhitespace": true,
+  // ファイルの末尾は改行で終わらせる
+  "files.insertFinalNewline": true,
+  // // ファイルを自動保存
+  // "files.autoSave": "afterDelay",
+  // 「ファイル モニタリングから除外するファイル パスの glob パターンを構成します。この設定を変更すると、再起動が必要になります。始動時に Code が消費する CPU 時間が多い場合は、大規模なフォルダーを除外して初期ロードを減らせます。」
+  // とのこと。vendorには大抵外部ライブラリが入っているので追加で指定している
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true,
+    "**/vendor/**": true
+  },
+  // 検索(Quick Open含む)から除外するファイルを指定。エクスプローラーには表示される
+  // files.excludeはエクスプローラーからも検索からも除外され、完全にないものとして扱われる http://qiita.com/shimoju/items/f64a0a7f0baa9cfafd4b
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/bundle": true,
+    "**/composer": true,
+    "**/tmp": true,
+    "**/.tmp": true
+  },
+}
