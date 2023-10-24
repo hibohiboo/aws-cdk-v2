@@ -13,7 +13,7 @@ import {
   BucketAccessControl,
   EventType,
 } from 'aws-cdk-lib/aws-s3';
-import s3Notify from 'aws-cdk-lib/aws-s3-notifications';
+import * as s3Notify from 'aws-cdk-lib/aws-s3-notifications';
 import { Topic, TopicPolicy } from 'aws-cdk-lib/aws-sns';
 import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Construct } from 'constructs';
@@ -26,9 +26,11 @@ export class S3FilterStack extends Stack {
   constructor(scope: Construct, id: string, props: S3FilterStackProps) {
     super(scope, id, props);
     const bucket = this.createBucket(props);
-    this.createSNS(props, bucket);
+    const sns = this.createSNS(props, bucket);
+    this.createLambda(sns);
     Tags.of(this).add('Project', props.projectNameTag);
   }
+
   private createBucket(props: { bucketName: string }) {
     const bucket = new Bucket(this, props.bucketName, {
       bucketName: props.bucketName,
@@ -80,6 +82,7 @@ export class S3FilterStack extends Stack {
     const lambda = new NodejsFunction(this, 'describeLambda', {
       runtime: Runtime.NODEJS_18_X,
       entry: `../src/handler/invoke/describeSNS.ts`,
+      functionName: 's3-filter-sns-subscription',
     });
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_sns_subscriptions.LambdaSubscription.html
     sns.addSubscription(

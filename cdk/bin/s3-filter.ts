@@ -20,7 +20,7 @@ const env = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 const stackId = `${processEnv.PROJECT_ID}-s3-filter`;
-new S3FilterStack(app, stackId, {
+new S3FilterStack(app, 'S3FilterStack', {
   bucketName: `${stackId}-bucket`,
   topicName: `${stackId}-topic`,
   projectNameTag: stackId,
