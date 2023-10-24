@@ -85,19 +85,7 @@ export class S3FilterStack extends Stack {
       functionName: 's3-filter-sns-subscription',
     });
     // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_sns_subscriptions.LambdaSubscription.html
-    sns.addSubscription(
-      new LambdaSubscription(lambda, {
-        filterPolicyWithMessageBody: {
-          // Lambda should receive only message matching the following conditions on message body:
-          // color: 'red' or 'orange'
-          // background: sns.FilterOrPolicy.policy({
-          //   color: sns.FilterOrPolicy.filter(sns.SubscriptionFilter.stringFilter({
-          //     allowlist: ['red', 'orange'],
-          //   })),
-          // }),
-        },
-      }),
-    );
+    sns.addSubscription(new LambdaSubscription(lambda));
     return lambda;
   }
 }
