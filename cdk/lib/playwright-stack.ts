@@ -10,7 +10,7 @@ export class PlayWrightStack extends Stack {
     new NodejsFunction(this, 'playWrightLambda', {
       runtime: Runtime.NODEJS_18_X,
       memorySize: 1024,
-      timeout: Duration.seconds(60),
+      timeout: Duration.seconds(10),
       entry: `../src/handler/invoke/playwright.ts`,
       bundling: { externalModules: ['@sparticuz/chromium'] },
       layers: [
