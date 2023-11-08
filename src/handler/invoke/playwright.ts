@@ -31,6 +31,7 @@ export const handler: Handler = async (event, context) => {
     await Promise.all(promises);
   } catch (e) {
     console.error(e);
+    throw e;
   } finally {
     if (browser) await browser.close();
   }
