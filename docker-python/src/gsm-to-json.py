@@ -17,9 +17,11 @@ json_str = sys.argv[1]
 json_obj = json.loads(json_str)
 lat = json_obj["lat"]
 lon = json_obj["lon"]
-FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2"
+# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2"
 # FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0101-0200_grib2"
 # FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0201-0300_grib2"
+FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0401-0500_grib2"
+# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0501-0512_grib2"
 # http://database.rish.kyoto-u.ac.jp/arch/jmadata/data/gpv/original/2023/11/24/ より
 gpv_file = pygrib.open("/grib2/" + FILE_NAME + ".bin")
 
