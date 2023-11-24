@@ -9,17 +9,16 @@ from lib import grib
 from lib import output
 
 # メッシュの刻み幅
-LAT_STEP=0.1 / 2
-LON_STEP=0.125 / 2
+LAT_STEP=0.025
+LON_STEP=0.03125
 
 # 引数取得
 json_str = sys.argv[1]
 json_obj = json.loads(json_str)
 lat = json_obj["lat"]
 lon = json_obj["lon"]
-FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2"
-# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0101-0200_grib2"
-# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0201-0300_grib2"
+# FILE_NAME = "Z__C_RJTD_20231124000000_MSM_GPV_Rjp_Lsurf_FH16-33_grib2"
+FILE_NAME = "Z__C_RJTD_20231124000000_MSM_GPV_Rjp_Lsurf_FH52-78_grib2"
 # http://database.rish.kyoto-u.ac.jp/arch/jmadata/data/gpv/original/2023/11/24/ より
 gpv_file = pygrib.open("/grib2/" + FILE_NAME + ".bin")
 

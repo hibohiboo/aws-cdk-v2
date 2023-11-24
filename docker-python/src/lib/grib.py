@@ -4,11 +4,7 @@ from lib import util
 # 日本時間に直す用
 time_diff = timedelta(hours=9)
 
-# メッシュの刻み幅
-LAT_STEP=0.1 / 2
-LON_STEP=0.125 / 2
-
-def getParamData(gpv_file, parameterName, lat, lon):
+def getParamData(gpv_file, parameterName, lat, lon, LAT_STEP, LON_STEP):
   la1 = lat - LAT_STEP
   la2 = lat + LAT_STEP
   lo1 = lon - LON_STEP
@@ -34,16 +30,14 @@ def getParamData(gpv_file, parameterName, lat, lon):
   return dataMap
 
 # 日射量と降水量は１時間間ずれる
-def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon):
+def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon, LAT_STEP, LON_STEP):
   la1 = lat - LAT_STEP
   la2 = lat + LAT_STEP
   lo1 = lon - LON_STEP
   lo2 = lon + LON_STEP
 
   t_messages = gpv_file.select(parameterName=parameterName)
-  # bias = 1 if len(t_messages) < tempLength else 0
-  # print("tempLength: " + str(tempLength))
-  # print("parameterName: " + str(len(t_messages)))
+
   bias = 1
   dataMap = {}
   # データの探索
@@ -62,8 +56,8 @@ def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon):
 
   return dataMap
 
-# 代表として気温のデータから、データの数と解析基準時刻を取得する
-def getBaseData(gpv_file, lat, lon):
+# 代表として気温のデータから、解析基準時刻を取得する
+def getBaseData(gpv_file, lat, lon, LAT_STEP, LON_STEP):
   t_messages = gpv_file.select(parameterName="Temperature")
   la1 = lat - LAT_STEP
   la2 = lat + LAT_STEP

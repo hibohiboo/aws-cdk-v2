@@ -8,4 +8,4 @@ services:
       - ./grib2:/grib2
       - ./src:/src
       - ./dist:/dist
-    command: python /src/gsm-to-json.py '{"lat":35.6745,"lon":139.7169}'
+    command: python /src/msm-to-json.py '{"lat":35.6745,"lon":139.7169}'
