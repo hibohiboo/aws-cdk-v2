@@ -33,8 +33,8 @@ def getParamData(gpv_file, parameterName, lat, lon):
 
   return dataMap
 
-# 日射量と降水量は１時間間ずれる可能性があるので、気温と配列の数が違う場合には１時間ずらす
-def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon, tempLength):
+# 日射量と降水量は１時間間ずれる
+def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon):
   la1 = lat - LAT_STEP
   la2 = lat + LAT_STEP
   lo1 = lon - LON_STEP
@@ -73,5 +73,5 @@ def getBaseData(gpv_file, lat, lon):
   for grb in t_messages:
       values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
       analDate = util.t2s(grb.analDate + time_diff)
-      return [analDate, len(t_messages)]
+      return analDate
 
