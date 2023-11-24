@@ -8,9 +8,6 @@ from lib import util
 from lib import grib
 from lib import output
 
-# ケルビンから℃変換用
-F_C_DIFF=273.15
-
 # 引数取得
 json_str = sys.argv[1]
 json_obj = json.loads(json_str)
