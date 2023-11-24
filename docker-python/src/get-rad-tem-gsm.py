@@ -11,8 +11,8 @@ time_diff = timedelta(hours=9)
 F_C_DIFF=273.15
 
 # メッシュの刻み幅
-LAT_STEP=0.1
-LON_STEP=0.125
+LAT_STEP=0.1 / 2
+LON_STEP=0.125 / 2
 
 # マージ用
 def merge_lists(list1, list2):
@@ -29,9 +29,12 @@ json_str = sys.argv[1]
 json_obj = json.loads(json_str)
 lat = json_obj["lat"]
 lon = json_obj["lon"]
+la1 = lat - LAT_STEP
+la2 = lat + LAT_STEP
+lo1 = lon - LON_STEP
+lo2 = lon + LON_STEP
 
-# https://predora005.hatenablog.com/entry/2020/10/31/000000
-gpv_file = pygrib.open("/grib2/Z__C_RJTD_20171205000000_MSM_GPV_Rjp_Lsurf_FH00-15_grib2.bin")
+gpv_file = pygrib.open("/grib2/Z__C_RJTD_20221013000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2.bin")
 t_messages = gpv_file.select(parameterName="Downward short-wave radiation flux")
 
 # 日射量データ取得用配列の初期化
@@ -39,7 +42,7 @@ radiation_data = []
 
 # データの探索
 for grb in t_messages:
-    values, lats, lons = grb.data(lat1=lat - LAT_STEP,lat2=lat + LAT_STEP,lon1=lon - LON_STEP,lon2=lon + LON_STEP)
+    values, lats, lons = grb.data(lat1=la1,lat2=lo2,lon1=lo1,lon2=lo2)
     jst =  grb.validDate + time_diff
     for i, lat in enumerate(lats):
         for j, x in enumerate(lat):
@@ -52,7 +55,7 @@ temperature_data = []
 
 # データの探索
 for grb in t_messages_temperature:
-    values, lats, lons = grb.data(lat1=lat - LAT_STEP,lat2=lat + LAT_STEP,lon1=lon - LON_STEP,lon2=lon + LON_STEP)
+    values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
     jst =  grb.validDate + time_diff
     for i, lat in enumerate(lats):
         for j, x in enumerate(lat):

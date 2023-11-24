@@ -1,4 +1,4 @@
-version: "3.5"
+version: '3.5'
 
 services:
   eccodes:
@@ -7,4 +7,4 @@ services:
     volumes:
       - ./grib2:/grib2
       - ./src:/src
-    command: python /src/get-rad-tem.py '{"lat":35.6745,"lon":139.7169}'
+    command: python /src/get-rad-tem-gsm.py '{"lat":35.6745,"lon":139.7169}'
