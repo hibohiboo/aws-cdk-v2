@@ -7,4 +7,5 @@ services:
     volumes:
       - ./grib2:/grib2
       - ./src:/src
-    command: python /src/get-rad-tem-gsm.py '{"lat":35.6745,"lon":139.7169}'
+      - ./dist:/dist
+    command: python /src/gsm-to-json.py '{"lat":35.6745,"lon":139.7169}'
