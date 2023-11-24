@@ -42,7 +42,7 @@ radiation_data = []
 
 # データの探索
 for grb in t_messages:
-    values, lats, lons = grb.data(lat1=la1,lat2=lo2,lon1=lo1,lon2=lo2)
+    values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
     jst =  grb.validDate + time_diff
     for i, lat in enumerate(lats):
         for j, x in enumerate(lat):
