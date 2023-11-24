@@ -1,4 +1,5 @@
 import json
+from lib import util
 
 # ケルビンから℃変換用
 F_C_DIFF=273.15
@@ -9,7 +10,7 @@ def toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh, analD
 
 def toOutput( lat_lon, temperature, radiation, pressure, mslp, uwind, vwind, rh):
     result = [{'validDate': key
-              , 'temperature': value - F_C_DIFF
+              , 'temperature': util.round_up_to_5_digits(value - F_C_DIFF)
               , 'radiation': radiation[lat_lon].get(key, None)
               , 'pressure': pressure[lat_lon].get(key, None)
               , 'mslp': mslp[lat_lon].get(key, None)

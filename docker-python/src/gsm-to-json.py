@@ -13,8 +13,11 @@ json_str = sys.argv[1]
 json_obj = json.loads(json_str)
 lat = json_obj["lat"]
 lon = json_obj["lon"]
-
-gpv_file = pygrib.open("/grib2/Z__C_RJTD_20221013000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2.bin")
+# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2"
+# FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0101-0200_grib2"
+FILE_NAME = "Z__C_RJTD_20231124000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0201-0300_grib2"
+# http://database.rish.kyoto-u.ac.jp/arch/jmadata/data/gpv/original/2023/11/24/ より
+gpv_file = pygrib.open("/grib2/" + FILE_NAME + ".bin")
 
 [analDate, temperatureValueLength] = grib.getBaseData(gpv_file, lat, lon)
 
@@ -36,6 +39,6 @@ rh = grib.getParamData(gpv_file, "Relative humidity", lat, lon)
 result_json = output.toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh, analDate)
 
 
-with open("/dist/output.json", 'w') as file:
+with open("/dist/" + FILE_NAME + ".json", 'w') as file:
     # ファイルに書き込む
     file.write(result_json)

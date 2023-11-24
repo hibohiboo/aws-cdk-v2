@@ -41,7 +41,10 @@ def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon, tempLength):
   lo2 = lon + LON_STEP
 
   t_messages = gpv_file.select(parameterName=parameterName)
-  bias = 1 if len(t_messages) < tempLength else 0
+  # bias = 1 if len(t_messages) < tempLength else 0
+  # print("tempLength: " + str(tempLength))
+  # print("parameterName: " + str(len(t_messages)))
+  bias = 1
   dataMap = {}
   # データの探索
   for grb in t_messages:
