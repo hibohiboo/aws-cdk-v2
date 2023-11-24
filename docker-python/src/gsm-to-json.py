@@ -16,10 +16,10 @@ lon = json_obj["lon"]
 
 gpv_file = pygrib.open("/grib2/Z__C_RJTD_20221013000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2.bin")
 
-analDate = grib.getAnalDate(gpv_file, lat, lon)
+[analDate, temperatureValueLength] = grib.getBaseData(gpv_file, lat, lon)
 
 temperature = grib.getParamData(gpv_file, "Temperature", lat, lon)
-radiation = grib.getParamData(gpv_file, "Downward short-wave radiation flux", lat, lon)
+radiation = grib.getParamDataMaybeFirstNone(gpv_file, "Downward short-wave radiation flux", lat, lon, temperatureValueLength)
 pressure = grib.getParamData(gpv_file, "Pressure", lat, lon)
 mslp = grib.getParamData(gpv_file, "Pressure reduced to MSL", lat, lon)
 uwind = grib.getParamData(gpv_file, "u-component of wind", lat, lon)
@@ -30,7 +30,6 @@ rh = grib.getParamData(gpv_file, "Relative humidity", lat, lon)
 # mcloud = grib.getParamData(gpv_file, "Medium Cloud Cover", lat, lon)
 # hcloud = grib.getParamData(gpv_file, "High Cloud Cover", lat, lon)
 # tcloud = grib.getParamData(gpv_file, "Total Cloud Cover", lat, lon)
-
 
 # print(radiation_data)
 

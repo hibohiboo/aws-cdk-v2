@@ -20,6 +20,7 @@ def getParamData(gpv_file, parameterName, lat, lon):
   # データの探索
   for grb in t_messages:
       values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
+      # 予報時刻(UTC)を日本時間に直す
       jst =  grb.validDate + time_diff
       for i, lat in enumerate(lats):
           for j, x in enumerate(lat):
@@ -32,7 +33,34 @@ def getParamData(gpv_file, parameterName, lat, lon):
 
   return dataMap
 
-def getAnalDate(gpv_file, lat, lon):
+# 日射量と降水量は１時間間ずれる可能性があるので、気温と配列の数が違う場合には１時間ずらす
+def getParamDataMaybeFirstNone(gpv_file, parameterName, lat, lon, tempLength):
+  la1 = lat - LAT_STEP
+  la2 = lat + LAT_STEP
+  lo1 = lon - LON_STEP
+  lo2 = lon + LON_STEP
+
+  t_messages = gpv_file.select(parameterName=parameterName)
+  bias = 1 if len(t_messages) < tempLength else 0
+  dataMap = {}
+  # データの探索
+  for grb in t_messages:
+      values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
+
+      jst =  grb.validDate + time_diff + timedelta(hours=bias)
+      for i, lat in enumerate(lats):
+          for j, x in enumerate(lat):
+            la = util.round_up_to_5_digits(lats[i][j])
+            lo = util.round_up_to_5_digits(lons[i][j])
+            key = str(la) + "_" + str(lo)
+            if key not in dataMap:
+              dataMap[key] = {}
+            dataMap[key][util.t2s(jst)] = util.round_up_to_5_digits(values[i][j])
+
+  return dataMap
+
+# 代表として気温のデータから、データの数と解析基準時刻を取得する
+def getBaseData(gpv_file, lat, lon):
   t_messages = gpv_file.select(parameterName="Temperature")
   la1 = lat - LAT_STEP
   la2 = lat + LAT_STEP
@@ -42,5 +70,5 @@ def getAnalDate(gpv_file, lat, lon):
   for grb in t_messages:
       values, lats, lons = grb.data(lat1=la1,lat2=la2,lon1=lo1,lon2=lo2)
       analDate = util.t2s(grb.analDate + time_diff)
-      return analDate
+      return [analDate, len(t_messages)]
 
