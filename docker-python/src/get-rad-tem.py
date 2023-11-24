@@ -45,7 +45,7 @@ for grb in t_messages:
         for j, x in enumerate(lat):
           radiation_data.append([jst, lats[i][j], lons[i][j], values[i][j]])
     
-t_messages_temperature = gpv_file.select(name="Temperature")
+t_messages_temperature = gpv_file.select(parameterName="Temperature")
 
 # 気温データ取得用配列の初期化
 temperature_data = []

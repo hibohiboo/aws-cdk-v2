@@ -5,7 +5,7 @@ import pandas as pd
 time_diff = timedelta(hours=9)
 
 gpv_file = pygrib.open("/grib2/Z__C_RJTD_20171205000000_MSM_GPV_Rjp_Lsurf_FH00-15_grib2.bin")
-t_messages = gpv_file.select(name="Downward short-wave radiation flux")
+t_messages = gpv_file.select(parameterName="Downward short-wave radiation flux")
 
 # 日射量データ取得用配列の初期化
 radiation_data = []
