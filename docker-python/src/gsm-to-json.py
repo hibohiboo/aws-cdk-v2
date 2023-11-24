@@ -37,7 +37,7 @@ rh = grib.getParamData(gpv_file, "Relative humidity", lat, lon)
 
 # print(radiation_data)
 
-result_json = output.toOutputJson(temperature) #, radiation, pressure, mslp, uwind, vwind, rh, analDate)
+result_json = output.toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh, analDate)
 
 
 with open("/dist/output.json", 'w') as file:
