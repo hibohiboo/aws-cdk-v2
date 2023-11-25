@@ -9,8 +9,8 @@ from lib import grib
 from lib import output
 
 # メッシュの刻み幅
-LAT_STEP=0.1 / 2
-LON_STEP=0.125 / 2
+LAT_STEP=0.1 / 2 # 緯度
+LON_STEP=0.125 / 2 # 経度
 
 # 引数取得
 json_str = sys.argv[1]
@@ -43,10 +43,15 @@ tcloud = grib.getParamData(gpv_file, "Total cloud cover", lat, lon, LAT_STEP, LO
 # print(radiation_data)
 
 result_json = output.toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
-result_csv = output.toOutputCSV(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
-df = pd.DataFrame(* result_csv, columns=['validDate','Latitude', 'Longitude', 'analDate', 'temperature', 'Radiation', 'pressure', 'mslp', 'uwind', 'vwind', 'rh', 'rain', 'lcloud', 'mcloud', 'hcloud', 'tcloud'])
-print(df)
 
 with open("/dist/" + FILE_NAME + ".json", 'w') as file:
     # ファイルに書き込む
     file.write(result_json)
+
+result_csv = output.toOutputCSV(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
+df = pd.DataFrame(* result_csv, columns=['validDate','Latitude', 'Longitude', 'analDate', 'temperature', 'Radiation', 'pressure', 'mslp', 'uwind', 'vwind', 'rh', 'rain', 'lcloud', 'mcloud', 'hcloud', 'tcloud'])
+print(df)
+
+with open("/dist/" + FILE_NAME + ".csv", 'w') as file:
+    # ファイルに書き込む
+    file.write(df.to_csv(index=False)) # index=False で行番号を出力しない
