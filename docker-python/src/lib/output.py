@@ -32,7 +32,7 @@ def toOutputCSV(temperature, radiation, pressure, mslp, uwind, vwind, rh, rain,l
 
 def toOutputCSVValue( lat_lon, temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud,analDate):
     result = [[ util.s2t(key) # validDate
-              , lat_lon 
+              , * [float(x) for x in lat_lon.split('_')] 
               , analDate
               , util.round_up_to_5_digits(value - F_C_DIFF)
               ,  radiation[lat_lon].get(key, None)
