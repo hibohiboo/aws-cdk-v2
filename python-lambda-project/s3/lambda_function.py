@@ -1,5 +1,16 @@
 import sys
 import os
+import json
+import io
+import boto3
+
 def handler(event, context):
-    return 'Hello ' + os.environ.get("TEST", "default") +' from AWS Lambda using Python' + sys.version + '!'
+    region = os.environ.get("AWS_REGION")
+    bucket_name = os.environ.get("S3_BUCKET_NAME")
+    s3_client = boto3.client('s3')
+    s3_object = s3_client.get_object(Bucket=bucket_name, Key='test.json')
+    json_data = s3_object['Body'].read()
+    data = json.loads(json_data)
+    print(json.dumps(data))
+    return 'Hello ' + data['test']
 

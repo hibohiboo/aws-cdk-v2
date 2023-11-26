@@ -30,7 +30,8 @@ version|ランタイム|pip|優先順位
 3.11|`/var/lang/lib/python3.11/site-packages`|`/var/lang/lib/python3.11/site-packages`|`/var/runtime`より`/var/lang/lib`を優先
 3.7-3.10|`/var/runtime`|`/var/lang/lib/python3.x/site-packages`|`/var/lang/lib`より`/var/runtime`を優先
 
-## 凡人
+参考blog
+
 https://www.softbank.jp/biz/blog/cloud-technology/articles/202304/cdk-lambda/
 
 ## s3
@@ -38,3 +39,16 @@ https://www.softbank.jp/biz/blog/cloud-technology/articles/202304/cdk-lambda/
 https://github.com/aws-samples/aws-cdk-examples/blob/master/python/lambda-s3-trigger/s3trigger/s3trigger_stack.py
 https://github.com/aws-samples/aws-cdk-examples/blob/master/python/lambda-with-existing-s3-code/app.py
 
+## 参考
+
+boto3
+https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html
+
+boto3でファイルの読み書き
+https://tech.unifa-e.com/entry/2021/09/22/131140
+
+Boto3のS3オブジェクトの読み書き
+https://dev.classmethod.jp/articles/boto3-s3-object-put-get/
+
+環境変数とリージョン
+https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/configuration-envvars.html

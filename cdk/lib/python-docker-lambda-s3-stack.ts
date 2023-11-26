@@ -1,8 +1,24 @@
-import { Aspects, Duration, Stack, StackProps, Tag, Tags } from 'aws-cdk-lib';
+import {
+  Aspects,
+  Duration,
+  RemovalPolicy,
+  Stack,
+  StackProps,
+  Tag,
+  Tags,
+} from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import {
+  BlockPublicAccess,
+  Bucket,
+  BucketAccessControl,
+} from 'aws-cdk-lib/aws-s3';
+import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
-interface PythonDockerLambdaS3StackProps extends StackProps {}
+interface PythonDockerLambdaS3StackProps extends StackProps {
+  projectDirectory: string;
+}
 
 export class PythonDockerLambdaS3Stack extends Stack {
   constructor(
@@ -11,20 +27,34 @@ export class PythonDockerLambdaS3Stack extends Stack {
     props: PythonDockerLambdaS3StackProps,
   ) {
     super(scope, id, props);
+    const bucket = new Bucket(this, 'Bucket', {
+      bucketName: 'hibohiboo-python-lambda-project-s3',
+      publicReadAccess: false,
+      accessControl: BucketAccessControl.PRIVATE,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+    new BucketDeployment(this, 'DeployFiles', {
+      destinationBucket: bucket,
+      sources: [Source.asset(`${props.projectDirectory}/s3Data/`)],
+    });
+
     const helloImageFunction = new lambda.DockerImageFunction(
       this,
       'AssetFunction',
       {
         functionName: 'docker-lambda-python-hello-world',
         code: lambda.DockerImageCode.fromImageAsset(
-          '../python-lambda-project/s3/',
+          `${props.projectDirectory}/s3/`,
         ),
         timeout: Duration.seconds(30),
         retryAttempts: 0,
-        environment: { TEST: 'test' },
+        environment: { TEST: 'test', S3_BUCKET_NAME: bucket.bucketName },
         memorySize: 128,
       },
     );
+    bucket.grantReadWrite(helloImageFunction);
     Tags.of(helloImageFunction).add('Service', 'lambda');
 
     Aspects.of(this).add(new Tag('Stack', id));

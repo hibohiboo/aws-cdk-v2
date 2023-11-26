@@ -10,4 +10,5 @@ const env = {
 const app = new cdk.App();
 new PythonDockerLambdaS3Stack(app, 'PythonDockerLambdaS3Stack', {
   env,
+  projectDirectory: '../python-lambda-project',
 });
