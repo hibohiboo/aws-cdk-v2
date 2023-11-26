@@ -28,12 +28,11 @@ RUN apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir build && cd build && cmake ../eccodes-2.32.1-Source && make && make install
-
+run pip3 install --upgrade pip
 RUN pip3 install eccodes
-
-# lambda実行用
-RUN pip3 install awslambdaric
-
 
 RUN pip3 install pygrib
 RUN pip3 install pandas
+
+# lambda実行用
+RUN pip3 install awslambdaric
