@@ -52,3 +52,6 @@ https://dev.classmethod.jp/articles/boto3-s3-object-put-get/
 
 環境変数とリージョン
 https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/configuration-envvars.html
+
+Python(boto3)でS3にデータをファイル保存せず直接アップロードする方法
+https://dev.classmethod.jp/articles/upload-json-directry-to-s3-with-python-boto3/

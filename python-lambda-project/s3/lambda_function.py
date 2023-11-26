@@ -11,6 +11,7 @@ def handler(event, context):
     s3_object = s3_client.get_object(Bucket=bucket_name, Key='test.json')
     json_data = s3_object['Body'].read()
     data = json.loads(json_data)
-    print(json.dumps(data))
+    data['test'] = 'world'
+    s3_client.put_object(Bucket=bucket_name, Key='test2.json', Body=json.dumps(data))
     return 'Hello ' + data['test']
 
