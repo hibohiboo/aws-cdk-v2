@@ -32,6 +32,7 @@
     "postlog-retention-deploy": "aws logs describe-log-groups --log-group-name-prefix /aws/lambda/hello --query \"logGroups[?retentionInDays==null]\" | jq -r \".[].logGroupName\" | sed \"s/^ *\\| *$//\"  | xargs -IVAR_LOG_GROUP_NAME aws logs put-retention-policy --log-group-name VAR_LOG_GROUP_NAME --retention-in-days 60",
     "docker-lambda-hello": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-hello.ts\" deploy PythonDockerLambdaHelloStack --profile produser",
     "docker-lambda-echo": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-echo.ts\" deploy PythonDockerLambdaEchoStack --profile produser",
+    "docker-lambda-s3": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-s3.ts\" deploy PythonDockerLambdaS3Stack --profile produser",
     "sns-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/alarm-sns.ts\" deploy AlarmSNSStack --profile produser",
     "s3-filter-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/s3-filter.ts\" deploy S3FilterStack --profile produser",
     "playwright-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/playwright.ts\" deploy PlayWrightStack --profile produser"
