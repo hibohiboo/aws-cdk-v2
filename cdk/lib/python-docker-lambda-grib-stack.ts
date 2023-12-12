@@ -40,7 +40,7 @@ export class PythonDockerLambdaGribStack extends Stack {
       sources: [Source.asset(`${props.projectDirectory}/s3Data/`)],
     });
 
-    const helloImageFunction = new lambda.DockerImageFunction(
+    const gribImageFunction = new lambda.DockerImageFunction(
       this,
       'AssetFunction',
       {
@@ -54,8 +54,8 @@ export class PythonDockerLambdaGribStack extends Stack {
         memorySize: 512, //  128だとタイムアウト
       },
     );
-    bucket.grantReadWrite(helloImageFunction);
-    Tags.of(helloImageFunction).add('Service', 'lambda');
+    bucket.grantReadWrite(gribImageFunction);
+    Tags.of(gribImageFunction).add('Service', 'lambda');
 
     Aspects.of(this).add(new Tag('Stack', id));
   }
