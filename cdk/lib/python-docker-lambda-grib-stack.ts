@@ -44,7 +44,7 @@ export class PythonDockerLambdaGribStack extends Stack {
       this,
       'AssetFunction',
       {
-        functionName: 'docker-lambda-python-hello-world',
+        functionName: 'docker-lambda-python-grib',
         code: lambda.DockerImageCode.fromImageAsset(
           `${props.projectDirectory}/grib/`,
         ),
