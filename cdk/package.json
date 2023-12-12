@@ -33,6 +33,7 @@
     "docker-lambda-hello": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-hello.ts\" deploy PythonDockerLambdaHelloStack --profile produser",
     "docker-lambda-echo": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-echo.ts\" deploy PythonDockerLambdaEchoStack --profile produser",
     "docker-lambda-s3": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-s3.ts\" deploy PythonDockerLambdaS3Stack --profile produser",
+    "docker-lambda-grib": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-grib.ts\" deploy PythonDockerLambdaGribStack --profile produser",
     "sns-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/alarm-sns.ts\" deploy AlarmSNSStack --profile produser",
     "s3-filter-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/s3-filter.ts\" deploy S3FilterStack --profile produser",
     "playwright-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/playwright.ts\" deploy PlayWrightStack --profile produser"
