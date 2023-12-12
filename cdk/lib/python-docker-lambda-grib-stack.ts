@@ -51,7 +51,7 @@ export class PythonDockerLambdaGribStack extends Stack {
         timeout: Duration.seconds(30),
         retryAttempts: 0,
         environment: { S3_BUCKET_NAME: bucket.bucketName },
-        memorySize: 512,
+        memorySize: 512, //  128だとタイムアウト
       },
     );
     bucket.grantReadWrite(helloImageFunction);
