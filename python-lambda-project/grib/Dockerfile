@@ -10,7 +10,7 @@ RUN wget https://confluence.ecmwf.int/download/attachments/45757960/eccodes-2.32
   && tar -xvf eccodes-2.32.1-Source.tar.gz \
   && rm eccodes-2.32.1-Source.tar.gz
 RUN mkdir build && cd build && cmake3 ../eccodes-2.32.1-Source && make && make install
-# RUN yum remove openssl openssl-devel wget tar gzip cmake3 gcc-gfortran perl libaec libaec-devel -y
+# RUN yum remove openssl openssl-devel wget tar gzip cmake3 gcc-gfortran perl  gcc-c++ libaec libaec-devel -y
 
 # Copy requirements.txt
 COPY requirements.txt ${LAMBDA_TASK_ROOT}

@@ -7,40 +7,42 @@ import pygrib
 import pandas as pd
 from datetime import timedelta, datetime
 import math
+import tempfile
 
 
 def handler(event, context):
+    lat = 35.6745
+    lon = 139.7169
     region = os.environ.get("AWS_REGION")
     bucket_name = os.environ.get("S3_BUCKET_NAME")
     s3_client = boto3.client('s3')
-    s3_object = s3_client.get_object(Bucket=bucket_name, Key='Z__C_RJTD_20221013000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2.bin')
-    file_data = s3_object['Body'].read()
-    lat = 35.6745
-    lon = 139.7169
-    data = execute(file_data, lat, lon)
+    filepath = tempfile.NamedTemporaryFile().name
+    s3_client.download_file(bucket_name, 'Z__C_RJTD_20221013000000_GSM_GPV_Rjp_Gll0p1deg_Lsurf_FD0000-0100_grib2.bin', filepath)
+    data = execute(filepath, lat, lon)
     s3_client.put_object(Bucket=bucket_name, Key='test2.json', Body=json.dumps(data))
-    return 'Hello ' + data['test']
+    os.remove(filepath)
+    return 'Success'
 
 # メッシュの刻み幅
 LAT_STEP=0.1 / 2 # 緯度
 LON_STEP=0.125 / 2 # 経度
-def execute(gribstr, lat, lon):
-    gpv_file = pygrib.fromstring(gribstr)
+def execute(filepath, lat, lon):
+    gpv_file = pygrib.open(filepath)
     analDate = getBaseData(gpv_file, lat, lon,  LAT_STEP, LON_STEP)
     temperature = getParamData(gpv_file, "Temperature", lat, lon, LAT_STEP, LON_STEP)
-    radiation = getParamData(gpv_file, "Downward short-wave radiation flux", lat, lon, LAT_STEP, LON_STEP)
-    pressure = getParamData(gpv_file, "Pressure", lat, lon, LAT_STEP, LON_STEP)
-    mslp = getParamData(gpv_file, "Pressure reduced to MSL", lat, lon, LAT_STEP, LON_STEP)
-    uwind = getParamData(gpv_file, "u-component of wind", lat, lon, LAT_STEP, LON_STEP)
-    vwind = getParamData(gpv_file, "v-component of wind", lat, lon, LAT_STEP, LON_STEP)
-    rh = getParamData(gpv_file, "Relative humidity", lat, lon, LAT_STEP, LON_STEP)
-    rain = getParamData(gpv_file, "Total precipitation", lat, lon, LAT_STEP, LON_STEP)
-    lcloud = getParamData(gpv_file, "Low cloud cover", lat, lon, LAT_STEP, LON_STEP)
-    mcloud = getParamData(gpv_file, "Medium cloud cover", lat, lon, LAT_STEP, LON_STEP)
-    hcloud = getParamData(gpv_file, "High cloud cover", lat, lon, LAT_STEP, LON_STEP)
-    tcloud = getParamData(gpv_file, "Total cloud cover", lat, lon, LAT_STEP, LON_STEP)
-    result_json = toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
-    return result_json
+    return toOutputJsonSingle(temperature, analDate)
+    # radiation = getParamData(gpv_file, "Downward short-wave radiation flux", lat, lon, LAT_STEP, LON_STEP)
+    # pressure = getParamData(gpv_file, "Pressure", lat, lon, LAT_STEP, LON_STEP)
+    # mslp = getParamData(gpv_file, "Pressure reduced to MSL", lat, lon, LAT_STEP, LON_STEP)
+    # uwind = getParamData(gpv_file, "u-component of wind", lat, lon, LAT_STEP, LON_STEP)
+    # vwind = getParamData(gpv_file, "v-component of wind", lat, lon, LAT_STEP, LON_STEP)
+    # rh = getParamData(gpv_file, "Relative humidity", lat, lon, LAT_STEP, LON_STEP)
+    # rain = getParamData(gpv_file, "Total precipitation", lat, lon, LAT_STEP, LON_STEP)
+    # lcloud = getParamData(gpv_file, "Low cloud cover", lat, lon, LAT_STEP, LON_STEP)
+    # mcloud = getParamData(gpv_file, "Medium cloud cover", lat, lon, LAT_STEP, LON_STEP)
+    # hcloud = getParamData(gpv_file, "High cloud cover", lat, lon, LAT_STEP, LON_STEP)
+    # tcloud = getParamData(gpv_file, "Total cloud cover", lat, lon, LAT_STEP, LON_STEP)
+    # result_json = toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
     # result_csv = toOutputCSV(temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud, analDate)
     # df = pd.DataFrame(* result_csv, columns=['validDate','Latitude', 'Longitude', 'analDate', 'temperature', 'Radiation', 'pressure', 'mslp', 'uwind', 'vwind', 'rh', 'rain', 'lcloud', 'mcloud', 'hcloud', 'tcloud'])
     # return df.to_csv(index=False)
@@ -102,6 +104,17 @@ def round_up_to_5_digits(number):
 
 # ケルビンから℃変換用
 F_C_DIFF=273.15
+
+def toOutputJsonSingle(temperature, analDate):
+    result_list = [{'lat_lon': key, 'values': toOutputSingle(key, temperature,analDate)} for key, value in temperature.items()]
+    return result_list
+
+def toOutputSingle( lat_lon, temperature, analDate):
+    result = [{'validDate': key
+              , 'analDate': analDate
+              , 'temperature': round_up_to_5_digits(value - F_C_DIFF)
+              } for key, value in temperature[lat_lon].items()]
+    return result
 
 def toOutputJson(temperature, radiation, pressure, mslp, uwind, vwind, rh, rain,lcloud,mcloud,hcloud,tcloud,analDate):
     result_list = [{'lat_lon': key, 'values': toOutput(key, temperature, radiation, pressure, mslp, uwind, vwind, rh,rain,lcloud,mcloud,hcloud,tcloud,analDate)} for key, value in temperature.items()]
