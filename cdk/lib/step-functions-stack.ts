@@ -22,44 +22,45 @@ export class StepFunctionSampleStack extends cdk.Stack {
     const firstFunction = new lambda.Function(this, 'FirstFunction', {
       ...lambdaParamsDefault,
       code: lambda.Code.fromInline(`
-        exports.handler = (event, context, callback) => {
+        exports.handler = async (event) => {
           console.log(event);
-          callback(null, {"Payload": {"Message": "hello", firstEvent: event}});
+          const Payload = { message: "hello", firstEvent: event }
+          return { Payload }
         };
       `),
     });
     const secondFunction = new lambda.Function(this, 'SecondFunction', {
       ...lambdaParamsDefault,
       code: lambda.Code.fromInline(`
-      exports.handler = (event, context, callback) => {
+      exports.handler = async (event) => {
         console.log(event);
-        callback(null, {});
+        return event;
       };
       `),
     });
 
     // definite state machine
-    const upstreamJob = new tasks.LambdaInvoke(this, 'UpstreamTask', {
+    const firstJonb = new tasks.LambdaInvoke(this, 'UpstreamTask', {
       lambdaFunction: firstFunction,
       outputPath: '$.Payload',
     });
-    const mainJob = new tasks.LambdaInvoke(this, 'MainFunctionTask', {
+    const secondJob = new tasks.LambdaInvoke(this, 'MainFunctionTask', {
       lambdaFunction: secondFunction,
       payload: stepfunc.TaskInput.fromJsonPathAt('$.Payload'),
     });
 
 
     // StateMachine
-    const definition = upstreamJob.next(mainJob).next(new stepfunc.Succeed(this, 'Queued'));
+    const definition = firstJonb.next(secondJob).next(new stepfunc.Succeed(this, 'Queued'));
     const stateMachine = new stepfunc.StateMachine(this, 'StepFunctionSampleStateMachine', {
       definitionBody: DefinitionBody.fromChainable(definition),
     });
 
-    // EventBridge Rule1（毎時15〜30分に起動）
+    // EventBridge Rule1（毎時5分に起動）
     new aws_events.Rule(this, 'rule1', {
       ruleName: 'sampleRule1',
       schedule: aws_events.Schedule.cron({
-        minute: '15-30',
+        minute: '5',
       }),
       targets: [new aws_events_targets.SfnStateMachine(stateMachine)],
     });
