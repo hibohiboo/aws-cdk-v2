@@ -18,7 +18,26 @@ export class StepFunctionSampleStack extends cdk.Stack {
       // bundling
     }
 
-
+    // Lambda samples
+    const firstFunction = new lambda.Function(this, 'FirstFunction', {
+      ...lambdaParamsDefault,
+      code: lambda.Code.fromInline(`
+        exports.handler = async (event) => {
+          console.log(event);
+          const Payload = { message: "hello", firstEvent: event }
+          return { Payload }
+        };
+      `),
+    });
+    const secondFunction = new lambda.Function(this, 'SecondFunction', {
+      ...lambdaParamsDefault,
+      code: lambda.Code.fromInline(`
+      exports.handler = async (event) => {
+        console.log(event);
+        return event;
+      };
+      `),
+    });
     const iteratorFunction = new lambda.Function(this, 'iteratorFunction', {
       ...lambdaParamsDefault,
       code: lambda.Code.fromInline(`
@@ -32,9 +51,18 @@ exports.handler = async (event) => {
 };
       `),
     });
+    // definite state machine
+    const firstJonb = new tasks.LambdaInvoke(this, 'UpstreamTask', {
+      lambdaFunction: firstFunction,
+      outputPath: '$.Payload',
+    });
+    const secondJob = new tasks.LambdaInvoke(this, 'MainFunctionTask', {
+      lambdaFunction: secondFunction,
+      payload: stepfunc.TaskInput.fromJsonPathAt('$.Payload'),
+    });
 
     const configureCount = new Pass(this, 'ConfigureCount', {
-      result: Result.fromObject({ count: 10, index: 0, step: 1 }),
+      result: Result.fromObject({ count: 3, index: 0, step: 1 }),
       resultPath: '$.iterator',
     });
     const iteratorJob = new tasks.LambdaInvoke(this, 'Iterator', {
@@ -51,9 +79,10 @@ exports.handler = async (event) => {
     const isCountReached = new Choice(this, 'IsCountReached');
     const condition1 = Condition.booleanEquals('$.iterator.continue', true);
     // StateMachine
-    const definition = configureCount.next(iteratorJob).next(
+    const iterators = configureCount.next(iteratorJob).next(
       isCountReached.when(condition1, exampleWork.next(iteratorJob)).otherwise(new Pass(this, 'Done'))
     );
+    const definition = firstJonb.next(secondJob).next(iterators);
     const stateMachine = new stepfunc.StateMachine(this, 'StepFunctionSampleStateMachine', {
       comment: "Iterator State Machine Example",
       definitionBody: DefinitionBody.fromChainable(definition),
