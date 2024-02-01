@@ -19,22 +19,23 @@
   },
   "homepage": "https://github.com/hibohiboo/aws-cdk-v2#readme",
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.445.0",
-    "@aws-sdk/client-sns": "^3.445.0",
+    "@aws-sdk/client-cloudwatch": "^3.504.0",
+    "@aws-sdk/client-sns": "^3.504.0",
     "aws-jwt-verify": "^4.0.0",
-    "aws-sdk": "^2.1490.0",
-    "date-fns": "^2.30.0",
+    "aws-sdk": "^2.1548.0",
+    "date-fns": "^3.3.1",
     "pg": "^8.11.3",
-    "playwright-core": "^1.39.0"
+    "playwright-core": "^1.41.1"
   },
   "devDependencies": {
-    "@sparticuz/chromium": "^118.0.0",
-    "@types/aws-lambda": "^8.10.126",
-    "@types/pg": "^8.10.9",
-    "esbuild": "^0.19.5",
-    "eslint": "^8.53.0",
-    "eslint-config-prettier": "^9.0.0",
-    "prettier": "^3.0.3",
-    "typescript": "^5.2.2"
+    "@sparticuz/chromium": "^121.0.0",
+    "@types/aws-lambda": "^8.10.133",
+    "@types/pg": "^8.11.0",
+    "esbuild": "^0.20.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "npm-check-updates": "^16.14.14",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
   }
 }
