@@ -4,7 +4,7 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { aws_events, aws_events_targets } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { DefinitionBody } from 'aws-cdk-lib/aws-stepfunctions';
+import { Choice, Condition, DefinitionBody, Pass, Result } from 'aws-cdk-lib/aws-stepfunctions';
 
 interface StepFunctionSampleStackProps extends cdk.StackProps { }
 export class StepFunctionSampleStack extends cdk.Stack {
@@ -18,41 +18,44 @@ export class StepFunctionSampleStack extends cdk.Stack {
       // bundling
     }
 
-    // Lambda samples
-    const firstFunction = new lambda.Function(this, 'FirstFunction', {
+
+    const iteratorFunction = new lambda.Function(this, 'iteratorFunction', {
       ...lambdaParamsDefault,
       code: lambda.Code.fromInline(`
-        exports.handler = async (event) => {
-          console.log(event);
-          const Payload = { message: "hello", firstEvent: event }
-          return { Payload }
-        };
-      `),
-    });
-    const secondFunction = new lambda.Function(this, 'SecondFunction', {
-      ...lambdaParamsDefault,
-      code: lambda.Code.fromInline(`
-      exports.handler = async (event) => {
-        console.log(event);
-        return event;
-      };
+exports.handler = async (event) => {
+  let index = event.iterator.index
+  const step = event.iterator.step
+  const count = event.iterator.count
+ 
+  index = index + step
+  return { index, step, count, continue: index < count };
+};
       `),
     });
 
-    // definite state machine
-    const firstJonb = new tasks.LambdaInvoke(this, 'UpstreamTask', {
-      lambdaFunction: firstFunction,
-      outputPath: '$.Payload',
+    const configureCount = new Pass(this, 'ConfigureCount', {
+      result: Result.fromObject({ count: 10, index: 0, step: 1 }),
+      resultPath: '$.iterator',
     });
-    const secondJob = new tasks.LambdaInvoke(this, 'MainFunctionTask', {
-      lambdaFunction: secondFunction,
-      payload: stepfunc.TaskInput.fromJsonPathAt('$.Payload'),
+    const iteratorJob = new tasks.LambdaInvoke(this, 'Iterator', {
+      lambdaFunction: iteratorFunction,
+      resultPath: '$.iterator',
+      payloadResponseOnly: true,
+      retryOnServiceExceptions: false
     });
-
-
+    const exampleWork = new Pass(this, 'ExampleWork', {
+      comment: "Your application logic, to run a specific number of times",
+      result: Result.fromObject({ success: true }),
+      resultPath: '$.result',
+    });
+    const isCountReached = new Choice(this, 'IsCountReached');
+    const condition1 = Condition.booleanEquals('$.iterator.continue', true);
     // StateMachine
-    const definition = firstJonb.next(secondJob).next(new stepfunc.Succeed(this, 'Queued'));
+    const definition = configureCount.next(iteratorJob).next(
+      isCountReached.when(condition1, exampleWork.next(iteratorJob)).otherwise(new Pass(this, 'Done'))
+    );
     const stateMachine = new stepfunc.StateMachine(this, 'StepFunctionSampleStateMachine', {
+      comment: "Iterator State Machine Example",
       definitionBody: DefinitionBody.fromChainable(definition),
     });
 
