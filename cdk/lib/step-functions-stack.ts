@@ -34,7 +34,7 @@ export class StepFunctionSampleStack extends cdk.Stack {
       code: lambda.Code.fromInline(`
       exports.handler = async (event) => {
         console.log(event);
-        return event;
+        return event.firstEvent;
       };
       `),
     });
@@ -47,7 +47,12 @@ exports.handler = async (event) => {
   const count = event.iterator.count
  
   index = index + step
-  return { index, step, count, continue: index < count };
+  const iterator = { index, step, count, continue: index < count }
+
+  const dt = new Date(event.time);
+  dt.setDate(dt.getDate() + 1);
+
+  return { iterator, time: dt.toISOString() };
 };
       `),
     });
@@ -59,6 +64,7 @@ exports.handler = async (event) => {
     const secondJob = new tasks.LambdaInvoke(this, 'MainFunctionTask', {
       lambdaFunction: secondFunction,
       payload: stepfunc.TaskInput.fromJsonPathAt('$.Payload'),
+      outputPath: '$.Payload',
     });
 
     const configureCount = new Pass(this, 'ConfigureCount', {
@@ -67,7 +73,6 @@ exports.handler = async (event) => {
     });
     const iteratorJob = new tasks.LambdaInvoke(this, 'Iterator', {
       lambdaFunction: iteratorFunction,
-      resultPath: '$.iterator',
       payloadResponseOnly: true,
       retryOnServiceExceptions: false
     });
