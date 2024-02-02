@@ -8,6 +8,7 @@ import {
   Choice,
   Condition,
   DefinitionBody,
+  Parallel,
   Pass,
   Result,
 } from 'aws-cdk-lib/aws-stepfunctions';
@@ -47,6 +48,12 @@ export class StepFunctionSampleStack extends cdk.Stack {
       };
       `),
     });
+    const thirdFunction = new lambda.Function(this, 'thirdFunction', {
+      ...lambdaParamsDefault,
+      code: lambda.Code.fromInline(
+        `exports.handler = async (event) => { console.log(event); };`,
+      ),
+    });
     const iteratorFunction = new lambda.Function(this, 'iteratorFunction', {
       ...lambdaParamsDefault,
       code: lambda.Code.fromInline(`
@@ -76,6 +83,11 @@ exports.handler = async (event) => {
       resultPath: '$.huga',
       payloadResponseOnly: true,
     });
+    const thirdJob = new tasks.LambdaInvoke(this, 'thirdJon', {
+      lambdaFunction: secondFunction,
+      resultPath: '$.huga',
+      payloadResponseOnly: true,
+    });
 
     const configureCount = new Pass(this, 'ConfigureCount', {
       result: Result.fromObject({ count: 3, index: 0, step: 1 }),
@@ -94,9 +106,16 @@ exports.handler = async (event) => {
     const isCountReached = new Choice(this, 'IsCountReached');
     const condition1 = Condition.booleanEquals('$.iterator.continue', true);
     // StateMachine
+    const parallel = new Parallel(this, 'parallel');
+    parallel.branch(firstJonb.next(secondJob));
+    parallel.branch(thirdJob);
     const loopJob = exampleWork
-      .next(firstJonb)
-      .next(secondJob)
+      .next(parallel)
+      .next(
+        new Pass(this, 'filter', {
+          inputPath: '$[0]',
+        }),
+      )
       .next(iteratorJob);
     const iterators = configureCount
       .next(iteratorJob)
