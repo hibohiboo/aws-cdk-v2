@@ -36,7 +36,8 @@
     "docker-lambda-grib": "cdk -a \"npx ts-node --prefer-ts-exts bin/python-docker-lambda-grib.ts\" deploy PythonDockerLambdaGribStack --profile produser",
     "sns-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/alarm-sns.ts\" deploy AlarmSNSStack --profile produser",
     "s3-filter-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/s3-filter.ts\" deploy S3FilterStack --profile produser",
-    "playwright-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/playwright.ts\" deploy PlayWrightStack --profile produser"
+    "playwright-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/playwright.ts\" deploy PlayWrightStack --profile produser",
+    "apigw2s3-deploy": "cdk -a \"npx ts-node --prefer-ts-exts bin/api-gateway-proxy-to-s3-by-cdk.ts\" deploy ApiGatewayProxyToS3ByCdkStack --profile produser"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
