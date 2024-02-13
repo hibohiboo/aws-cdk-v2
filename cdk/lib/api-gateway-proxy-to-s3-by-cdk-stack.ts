@@ -23,16 +23,7 @@ export class ApiGatewayProxyToS3ByCdkStack extends Stack {
       requestParameters: {},
       methodResponses: [this.createOkResponse(), this.create400Response(), this.createErrorResponse()],
     });
-    const lambdaParamsDefault = {
-      runtime: Runtime.NODEJS_20_X,
-      handler: 'index.handler',
-    };
-
-    const lambdaFunction = new Function(this, 'lambdaFunction', {
-      ...lambdaParamsDefault,
-      code: Code.fromInline(`exports.handler = async (event) => { console.log(JSON.stringify(event)); };`),
-    });
-    bucket.addEventNotification(EventType.OBJECT_CREATED_PUT, new LambdaDestination(lambdaFunction));
+    this.createLambdaFunction(bucket);
   }
   private createBucket(projectName: string) {
     const bucket = new Bucket(this, 'Bucket', { bucketName: `${projectName}-proxy-to-bucket`, removalPolicy: RemovalPolicy.DESTROY });
@@ -137,5 +128,46 @@ export class ApiGatewayProxyToS3ByCdkStack extends Stack {
         'method.response.header.Access-Control-Allow-Origin': true,
       },
     };
+  }
+  private createLambdaFunction(bucket: Bucket) {
+    const lambdaParamsDefault = {
+      runtime: Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+    };
+
+    const lambdaFunction = new Function(this, 'lambdaFunction', {
+      ...lambdaParamsDefault,
+      code: Code.fromInline(`
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+exports.handler = async (event) => {
+  console.log(JSON.stringify(event));
+  const client = new S3Client({
+    region: 'ap-northeast-1'
+  })
+  const ret = await Promise.all(event.Records.map(async (record) => {
+    const input = {
+      Bucket: record.s3.bucket.name,
+      Key: record.s3.object.key,
+    }
+    const command = new GetObjectCommand(input)
+    const data = await client.send(command)
+    const bodyContents = await streamToString(data.Body)
+    console.log(bodyContents);
+    return JSON.parse(bodyContents); // 文字列で返ってくるのでJSON.parse()で囲んでJSONオブジェクトにする
+  }));
+  console.log(ret);
+};
+async function streamToString(stream) {
+  return new Promise((resolve, reject) => {
+      const chunks = [];
+      stream.on('data', (chunk) => chunks.push(chunk));
+      stream.on('error', reject);
+      stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
+}
+ `),
+    });
+    bucket.addEventNotification(EventType.OBJECT_CREATED_PUT, new LambdaDestination(lambdaFunction));
+    bucket.grantRead(lambdaFunction);
   }
 }
