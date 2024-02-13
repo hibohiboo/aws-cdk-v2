@@ -1,8 +1,10 @@
 import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { AwsIntegration, Cors, MethodLoggingLevel, PassthroughBehavior, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications';
 
 // https://dev.classmethod.jp/articles/api-gateway-proxy-to-s3-put-object-by-cdk/
 // https://qiita.com/hibohiboo/items/0026418971669aa1cf77
@@ -21,6 +23,16 @@ export class ApiGatewayProxyToS3ByCdkStack extends Stack {
       requestParameters: {},
       methodResponses: [this.createOkResponse(), this.create400Response(), this.createErrorResponse()],
     });
+    const lambdaParamsDefault = {
+      runtime: Runtime.NODEJS_20_X,
+      handler: 'index.handler',
+    };
+
+    const lambdaFunction = new Function(this, 'lambdaFunction', {
+      ...lambdaParamsDefault,
+      code: Code.fromInline(`exports.handler = async (event) => { console.log(JSON.stringify(event)); };`),
+    });
+    bucket.addEventNotification(EventType.OBJECT_CREATED_PUT, new LambdaDestination(lambdaFunction));
   }
   private createBucket(projectName: string) {
     const bucket = new Bucket(this, 'Bucket', { bucketName: `${projectName}-proxy-to-bucket`, removalPolicy: RemovalPolicy.DESTROY });
@@ -64,14 +76,14 @@ export class ApiGatewayProxyToS3ByCdkStack extends Stack {
         passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH,
         // https://docs.aws.amazon.com/ja_jp/apigateway/latest/developerguide/http-api-logging-variables.html
         requestParameters: {
-          // リクエストのEpoc を 統合リクエストのパスパラメータ folder にマッピングする
+          // リクエストのEpocTime を 統合リクエストのパスパラメータ folder にマッピングする
           'integration.request.path.folder': 'context.requestTimeEpoch',
           // API Gateway が API リクエストに割り当てる IDを 統合リクエストの object にマッピングする。
           'integration.request.path.object': 'context.requestId',
         },
         integrationResponses: [
           {
-            statusCode: '200',
+            statusCode: '202',
             responseParameters: {
               ...responseParameters,
               'method.response.header.Timestamp': 'integration.response.header.Date',
@@ -95,7 +107,7 @@ export class ApiGatewayProxyToS3ByCdkStack extends Stack {
   }
   private createOkResponse() {
     return {
-      statusCode: '200',
+      statusCode: '202',
       responseParameters: {
         'method.response.header.Timestamp': true,
         'method.response.header.Content-Length': true,
