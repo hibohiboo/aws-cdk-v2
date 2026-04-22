@@ -1,20 +1,14 @@
-プライベートなRDSを作ってみる。
-PC からの接続手順
-1. Endpoint ID を確認
+# Welcome to your CDK TypeScript project
 
+This is a blank project for CDK development with TypeScript.
 
-aws ec2 describe-instance-connect-endpoints \
-  --query 'InstanceConnectEndpoints[0].InstanceConnectEndpointId' \
-  --output text
-2. トンネルを開く（ターミナル1）
+The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
+## Useful commands
 
-aws ec2-instance-connect open-tunnel \
-  --instance-connect-endpoint-id eice-xxxxxxxxxxxxxxxxx \
-  --remote-port 3306 \
-  --local-port 13306 \
-  --remote-host <Aurora クラスターエンドポイント>
-3. MySQL クライアントで接続（ターミナル2）
-
-
-mysql -h 127.0.0.1 -P 13306 -u admin -p
+* `npm run build`   compile typescript to js
+* `npm run watch`   watch for changes and compile
+* `npm run test`    perform the jest unit tests
+* `npx cdk deploy`  deploy this stack to your default AWS account/region
+* `npx cdk diff`    compare deployed stack with current state
+* `npx cdk synth`   emits the synthesized CloudFormation template

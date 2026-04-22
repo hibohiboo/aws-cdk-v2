@@ -1,25 +1,26 @@
 {
   "name": "cdk-2026",
   "version": "0.1.0",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "bin": {
+    "cdk-2026": "bin/cdk-2026.js"
+  },
   "scripts": {
-    "deploy": "cdk deploy",
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest"
+    "test": "jest",
+    "cdk": "cdk"
   },
   "devDependencies": {
     "@types/jest": "^30",
     "@types/node": "^25.6.0",
-    "aws-cdk-lib": "^2.250.0",
-    "constructs": "^10.6.0",
     "jest": "^30",
     "ts-jest": "^29",
+    "aws-cdk": "2.1118.4",
+    "ts-node": "^10.9.2",
     "typescript": "~6.0.3"
   },
-  "peerDependencies": {
-    "aws-cdk-lib": "^2.248.0",
-    "constructs": "^10.5.0"
+  "dependencies": {
+    "aws-cdk-lib": "^2.250.0",
+    "constructs": "^10.6.0"
   }
 }
