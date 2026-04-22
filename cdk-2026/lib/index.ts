@@ -23,11 +23,29 @@ export class Cdk2026 extends Construct {
       ],
     });
 
+    const eiceSecurityGroup = new ec2.SecurityGroup(this, 'EiceSecurityGroup', {
+      vpc: this.vpc,
+      description: 'Security group for EC2 Instance Connect Endpoint',
+      allowAllOutbound: false,
+    });
+
     this.auroraSecurityGroup = new ec2.SecurityGroup(this, 'AuroraSecurityGroup', {
       vpc: this.vpc,
       description: 'Security group for Aurora MySQL Serverless V2',
       allowAllOutbound: false,
     });
+
+    eiceSecurityGroup.addEgressRule(
+      ec2.Peer.securityGroupId(this.auroraSecurityGroup.securityGroupId),
+      ec2.Port.tcp(3306),
+      'Allow outbound to Aurora MySQL',
+    );
+
+    this.auroraSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(eiceSecurityGroup.securityGroupId),
+      ec2.Port.tcp(3306),
+      'Allow inbound from EC2 Instance Connect Endpoint',
+    );
 
     this.auroraCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraMysql({
@@ -45,6 +63,16 @@ export class Cdk2026 extends Construct {
       storageEncrypted: true,
       deletionProtection: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const isolatedSubnets = this.vpc.selectSubnets({
+      subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+    });
+
+    new ec2.CfnInstanceConnectEndpoint(this, 'EiceEndpoint', {
+      subnetId: isolatedSubnets.subnetIds[0],
+      securityGroupIds: [eiceSecurityGroup.securityGroupId],
+      preserveClientIp: false,
     });
   }
 }
