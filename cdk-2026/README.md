@@ -11,7 +11,7 @@ aws rds describe-db-clusters \
   --query 'DBClusters[0].Endpoint' \
   --output text
 
-# Aurora エンドポイントを IP に解決(powershell)
+Aurora エンドポイントを IP に解決(powershell)
 Resolve-DnsName 上記コマンドの結果（xxx.northeast-1.rds.amazonaws.com）
 
 Aurora はフェイルオーバー時に IP が変わる可能性があります。接続できなくなったら再度Resolve-DnsName で IP を取り直してください。
