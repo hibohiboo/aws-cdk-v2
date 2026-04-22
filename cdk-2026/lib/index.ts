@@ -3,19 +3,15 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 
-export interface Cdk2026Props {
-  vpc?: ec2.IVpc;
-}
-
 export class Cdk2026 extends Construct {
-  public readonly vpc: ec2.IVpc;
+  public readonly vpc: ec2.Vpc;
   public readonly auroraCluster: rds.DatabaseCluster;
   public readonly auroraSecurityGroup: ec2.SecurityGroup;
 
-  constructor(scope: Construct, id: string, props: Cdk2026Props = {}) {
+  constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.vpc = props.vpc ?? new ec2.Vpc(this, 'Vpc', {
+    this.vpc = new ec2.Vpc(this, 'Vpc', {
       maxAzs: 2,
       natGateways: 1,
       subnetConfiguration: [
