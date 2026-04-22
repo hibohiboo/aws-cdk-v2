@@ -22,7 +22,6 @@ export class Cdk2026Stack extends cdk.Stack {
     const eiceSecurityGroup = new ec2.SecurityGroup(this, 'EiceSecurityGroup', {
       vpc,
       description: 'Security group for EC2 Instance Connect Endpoint',
-      allowAllOutbound: false,
     });
 
     const auroraSecurityGroup = new ec2.SecurityGroup(this, 'AuroraSecurityGroup', {
@@ -31,31 +30,25 @@ export class Cdk2026Stack extends cdk.Stack {
       allowAllOutbound: false,
     });
 
-    eiceSecurityGroup.addEgressRule(
-      ec2.Peer.securityGroupId(auroraSecurityGroup.securityGroupId),
-      ec2.Port.tcp(3306),
-      'Allow outbound to Aurora MySQL',
-    );
+    const AURORA_PORT = 3389;
 
-    auroraSecurityGroup.addIngressRule(
-      ec2.Peer.securityGroupId(eiceSecurityGroup.securityGroupId),
-      ec2.Port.tcp(3306),
-      'Allow inbound from EC2 Instance Connect Endpoint',
-    );
+    auroraSecurityGroup.addIngressRule(ec2.Peer.securityGroupId(eiceSecurityGroup.securityGroupId), ec2.Port.tcp(AURORA_PORT));
 
-    new rds.DatabaseCluster(this, 'AuroraCluster', {
+    const auroraCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraMysql({
         version: rds.AuroraMysqlEngineVersion.VER_3_12_0,
       }),
       writer: rds.ClusterInstance.serverlessV2('writer'),
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 4,
+      port: AURORA_PORT,
       vpc,
       vpcSubnets: {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
       securityGroups: [auroraSecurityGroup],
       credentials: rds.Credentials.fromGeneratedSecret('admin'),
+      defaultDatabaseName: 'my-app',
       storageEncrypted: true,
       deletionProtection: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -69,6 +62,11 @@ export class Cdk2026Stack extends cdk.Stack {
       subnetId: isolatedSubnets.subnetIds[0],
       securityGroupIds: [eiceSecurityGroup.securityGroupId],
       preserveClientIp: false,
+    });
+
+    new cdk.CfnOutput(this, 'AuroraClusterEndpoint', {
+      value: auroraCluster.clusterEndpoint.hostname,
+      description: 'Aurora cluster endpoint for open-tunnel --remote-host',
     });
   }
 }

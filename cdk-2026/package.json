@@ -5,6 +5,8 @@
     "cdk-2026": "bin/cdk-2026.js"
   },
   "scripts": {
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
