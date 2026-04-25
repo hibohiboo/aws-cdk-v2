@@ -19,9 +19,10 @@ export class Cdk2026Stack extends cdk.Stack {
       ],
     });
 
-    const eiceSecurityGroup = new ec2.SecurityGroup(this, 'EiceSecurityGroup', {
+    // allowAllOutbound: true (デフォルト) にして AuroraSecurityGroup との循環参照を防ぐ
+    const verifiedAccessSg = new ec2.SecurityGroup(this, 'VerifiedAccessEndpointSg', {
       vpc,
-      description: 'Security group for EC2 Instance Connect Endpoint',
+      description: 'Security group for Verified Access endpoint',
     });
 
     const auroraSecurityGroup = new ec2.SecurityGroup(this, 'AuroraSecurityGroup', {
@@ -30,9 +31,12 @@ export class Cdk2026Stack extends cdk.Stack {
       allowAllOutbound: false,
     });
 
-    const AURORA_PORT = 3389;
+    const AURORA_PORT = 3306;
 
-    auroraSecurityGroup.addIngressRule(ec2.Peer.securityGroupId(eiceSecurityGroup.securityGroupId), ec2.Port.tcp(AURORA_PORT));
+    auroraSecurityGroup.addIngressRule(
+      ec2.Peer.securityGroupId(verifiedAccessSg.securityGroupId),
+      ec2.Port.tcp(AURORA_PORT),
+    );
 
     const auroraCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraMysql({
@@ -48,7 +52,7 @@ export class Cdk2026Stack extends cdk.Stack {
       },
       securityGroups: [auroraSecurityGroup],
       credentials: rds.Credentials.fromGeneratedSecret('admin'),
-      defaultDatabaseName: 'my-app',
+      defaultDatabaseName: 'myapp',
       storageEncrypted: true,
       deletionProtection: false,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -58,15 +62,52 @@ export class Cdk2026Stack extends cdk.Stack {
       subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
     });
 
-    new ec2.CfnInstanceConnectEndpoint(this, 'EiceEndpoint', {
-      subnetId: isolatedSubnets.subnetIds[0],
-      securityGroupIds: [eiceSecurityGroup.securityGroupId],
-      preserveClientIp: false,
+    // IAM Identity Center を信頼プロバイダーとして使用 (アカウント内に事前設定が必要)
+    const trustProvider = new ec2.CfnVerifiedAccessTrustProvider(this, 'VerifiedAccessTrustProvider', {
+      trustProviderType: 'user',
+      userTrustProviderType: 'iam-identity-center',
+      policyReferenceName: 'idc',
+      description: 'IAM Identity Center trust provider for Aurora MySQL access',
+    });
+
+    const verifiedAccessInstance = new ec2.CfnVerifiedAccessInstance(this, 'VerifiedAccessInstance', {
+      description: 'Verified Access instance for Aurora MySQL access',
+      verifiedAccessTrustProviderIds: [trustProvider.attrVerifiedAccessTrustProviderId],
+    });
+
+    const verifiedAccessGroup = new ec2.CfnVerifiedAccessGroup(this, 'VerifiedAccessGroup', {
+      verifiedAccessInstanceId: verifiedAccessInstance.attrVerifiedAccessInstanceId,
+      description: 'Verified Access group for Aurora MySQL access',
+      // 全認証ユーザーを許可。本番環境では context.idc.user.email 等で制限すること
+      policyDocument: 'permit(principal, action, resource) when { true };',
+      policyEnabled: true,
+    });
+
+    const verifiedAccessEndpoint = new ec2.CfnVerifiedAccessEndpoint(this, 'VerifiedAccessEndpoint', {
+      attachmentType: 'vpc',
+      endpointType: 'rds',
+      verifiedAccessGroupId: verifiedAccessGroup.attrVerifiedAccessGroupId,
+      securityGroupIds: [verifiedAccessSg.securityGroupId],
+      rdsOptions: {
+        rdsDbClusterArn: auroraCluster.clusterArn,
+        rdsEndpoint: auroraCluster.clusterEndpoint.hostname,
+        subnetIds: isolatedSubnets.subnetIds,
+        port: AURORA_PORT,
+        protocol: 'tcp',
+      },
+      description: 'Verified Access RDS endpoint for Aurora MySQL cluster',
+      policyDocument: 'permit(principal, action, resource) when { true };',
+      policyEnabled: true,
     });
 
     new cdk.CfnOutput(this, 'AuroraClusterEndpoint', {
       value: auroraCluster.clusterEndpoint.hostname,
-      description: 'Aurora cluster endpoint for open-tunnel --remote-host',
+      description: 'Aurora cluster endpoint hostname',
+    });
+
+    new cdk.CfnOutput(this, 'VerifiedAccessEndpointDomain', {
+      value: verifiedAccessEndpoint.attrEndpointDomain,
+      description: 'Verified Access endpoint domain (DBクライアントのホストに指定)',
     });
   }
 }
