@@ -33,10 +33,7 @@ export class Cdk2026Stack extends cdk.Stack {
 
     const AURORA_PORT = 3306;
 
-    auroraSecurityGroup.addIngressRule(
-      ec2.Peer.securityGroupId(verifiedAccessSg.securityGroupId),
-      ec2.Port.tcp(AURORA_PORT),
-    );
+    auroraSecurityGroup.addIngressRule(ec2.Peer.securityGroupId(verifiedAccessSg.securityGroupId), ec2.Port.tcp(AURORA_PORT));
 
     const auroraCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraMysql({
@@ -83,31 +80,33 @@ export class Cdk2026Stack extends cdk.Stack {
       policyEnabled: true,
     });
 
-    const verifiedAccessEndpoint = new ec2.CfnVerifiedAccessEndpoint(this, 'VerifiedAccessEndpoint', {
-      attachmentType: 'vpc',
-      endpointType: 'rds',
-      verifiedAccessGroupId: verifiedAccessGroup.attrVerifiedAccessGroupId,
-      securityGroupIds: [verifiedAccessSg.securityGroupId],
-      rdsOptions: {
-        rdsDbClusterArn: auroraCluster.clusterArn,
-        rdsEndpoint: auroraCluster.clusterEndpoint.hostname,
-        subnetIds: isolatedSubnets.subnetIds,
-        port: AURORA_PORT,
-        protocol: 'tcp',
-      },
-      description: 'Verified Access RDS endpoint for Aurora MySQL cluster',
-      policyDocument: 'permit(principal, action, resource) when { true };',
-      policyEnabled: true,
-    });
-
     new cdk.CfnOutput(this, 'AuroraClusterEndpoint', {
       value: auroraCluster.clusterEndpoint.hostname,
       description: 'Aurora cluster endpoint hostname',
     });
 
-    new cdk.CfnOutput(this, 'VerifiedAccessEndpointDomain', {
-      value: verifiedAccessEndpoint.attrEndpointDomain,
-      description: 'Verified Access endpoint domain (DBクライアントのホストに指定)',
-    });
+    // 1日中使うと
+    // 5$程度必要なので、使う時だけ作成
+    // const verifiedAccessEndpoint = new ec2.CfnVerifiedAccessEndpoint(this, 'VerifiedAccessEndpoint', {
+    //   attachmentType: 'vpc',
+    //   endpointType: 'rds',
+    //   verifiedAccessGroupId: verifiedAccessGroup.attrVerifiedAccessGroupId,
+    //   securityGroupIds: [verifiedAccessSg.securityGroupId],
+    //   rdsOptions: {
+    //     rdsDbClusterArn: auroraCluster.clusterArn,
+    //     rdsEndpoint: auroraCluster.clusterEndpoint.hostname,
+    //     subnetIds: isolatedSubnets.subnetIds,
+    //     port: AURORA_PORT,
+    //     protocol: 'tcp',
+    //   },
+    //   description: 'Verified Access RDS endpoint for Aurora MySQL cluster',
+    //   policyDocument: 'permit(principal, action, resource) when { true };',
+    //   policyEnabled: true,
+    // });
+
+    // new cdk.CfnOutput(this, 'VerifiedAccessEndpointDomain', {
+    //   value: verifiedAccessEndpoint.attrEndpointDomain,
+    //   description: 'Verified Access endpoint domain (DBクライアントのホストに指定)',
+    // });
   }
 }

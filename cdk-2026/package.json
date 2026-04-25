@@ -2,7 +2,10 @@
   "name": "cdk-2026",
   "version": "0.1.0",
   "bin": {
-    "cdk-2026": "bin/cdk-2026.js"
+    "cdk-2026": "bin/cdk-2026.js",
+    "stop-rdb": " aws rds stop-db-cluster --db-cluster-identifier cdk2026stack-auroraclusterxxx-xxxxx",
+    "start-rdb": "aws rds start-db-cluster --db-cluster-identifier cdk2026stack-auroraclusterxxx-xxxxx",
+    "check-rdb": "aws rds describe-db-clusters --db-cluster-identifier cdk2026stack-auroraclusterxxx-xxxxx  --query \"DBClusters[0].Status\" --output text"
   },
   "scripts": {
     "deploy": "cdk deploy",
